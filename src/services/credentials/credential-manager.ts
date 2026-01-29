@@ -1,5 +1,6 @@
 import { KeychainService } from './keychain.service.js';
 import { EnvService } from './env.service.js';
+import { logger } from '../../utils/logger.js';
 import type { ApiProvider, StoragePreference, CredentialStorage } from './credential.interface.js';
 
 export interface CredentialManagerConfig {
@@ -124,23 +125,23 @@ export class CredentialManager {
     if (keychainAvailable) {
       try {
         await this.keychainService.deleteKey(provider);
-      } catch {
-        // Ignore errors
+      } catch (error) {
+        logger.debug(`Failed to delete ${provider} key from keychain: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
     // Delete from local .env
     try {
       await this.envService.deleteKey(provider);
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      logger.debug(`Failed to delete ${provider} key from local .env: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     // Delete from global .env
     try {
       await this.globalEnvService.deleteKey(provider);
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      logger.debug(`Failed to delete ${provider} key from global .env: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

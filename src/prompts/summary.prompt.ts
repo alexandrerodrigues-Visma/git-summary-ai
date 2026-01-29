@@ -1,4 +1,5 @@
 import type { AISummaryRequest } from '../services/ai/ai.interface.js';
+import { scanForSecrets, formatSecretWarning } from '../services/security/secret-scanner.js';
 
 export function buildSummaryPrompt(request: AISummaryRequest): string {
   return `You are a helpful assistant that generates clear, concise commit summaries for code reviews.
@@ -60,6 +61,16 @@ function truncateDiff(diff: string, maxLength: number): string {
   const lastNewline = truncated.lastIndexOf('\n');
 
   return truncated.slice(0, lastNewline) + '\n\n[... diff truncated for length ...]';
+}
+
+export function checkSecretsInDiff(diff: string): string {
+  // Allow skipping secret scan via environment variable
+  if (process.env.SKIP_SECRET_SCAN === 'true') {
+    return '';
+  }
+
+  const result = scanForSecrets(diff);
+  return result.hasSecrets ? formatSecretWarning(result) : '';
 }
 
 export function parseAIResponse(response: string): { title?: string; summary: string; commitMessage: string } {

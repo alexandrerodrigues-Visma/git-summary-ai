@@ -1,10 +1,17 @@
 import chalk from 'chalk';
 
+const isDebugMode = process.env.DEBUG === 'true';
+
 export const logger = {
   info: (message: string) => console.log(chalk.blue('ℹ'), message),
   success: (message: string) => console.log(chalk.green('✔'), message),
   warning: (message: string) => console.log(chalk.yellow('⚠'), message),
   error: (message: string) => console.log(chalk.red('✖'), message),
+  debug: (message: string) => {
+    if (isDebugMode) {
+      console.log(chalk.gray('[DEBUG]'), message);
+    }
+  },
 
   step: (stepNumber: number, totalSteps: number, message: string) => {
     console.log(chalk.cyan(`[${stepNumber}/${totalSteps}]`), message);

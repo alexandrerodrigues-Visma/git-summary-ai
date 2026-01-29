@@ -6,6 +6,7 @@ import { loadConfig, validateApiKeyAsync } from '../config/loader.js';
 import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/spinner.js';
 import { ensureSetupComplete } from '../utils/setup-check.js';
+import { checkSecretsInDiff } from '../prompts/summary.prompt.js';
 import chalk from 'chalk';
 
 export interface SummaryResult {
@@ -45,6 +46,28 @@ export async function generateAndPreviewSummary(options: {
   if (diffSummary.stats.filesChanged === 0) {
     logger.warning('No changes to summarize');
     return null;
+  }
+
+  // Check for secrets in diff before sending to AI
+  const secretWarning = checkSecretsInDiff(diffSummary.diff);
+  if (secretWarning) {
+    logger.warning(secretWarning);
+    logger.blank();
+
+    const { continueWithSecrets } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'continueWithSecrets',
+        message: 'Continue sending diff to AI provider despite potential secrets?',
+        default: false,
+      },
+    ]);
+
+    if (!continueWithSecrets) {
+      logger.info('Cancelled - secrets detected');
+      return null;
+    }
+    logger.blank();
   }
 
   // Create AI service and generate summary

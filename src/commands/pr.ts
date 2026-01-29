@@ -43,7 +43,7 @@ export async function createPullRequest(options: {
     // Accept tokens starting with gho_, ghp_, or github_pat_
     if (ghToken && (ghToken.startsWith('gho_') || ghToken.startsWith('ghp_') || ghToken.startsWith('github_pat_'))) {
       token = ghToken;
-      logger.info(`Using GitHub CLI token (${ghToken.substring(0, 8)}...)`);
+      logger.info(`Using GitHub CLI token (...${ghToken.slice(-4)})`);
     }
   } catch (error) {
     // GitHub CLI not available, will try credential manager
@@ -54,7 +54,7 @@ export async function createPullRequest(options: {
     const credentialManager = getCredentialManager();
     token = await credentialManager.getApiKey('github');
     if (token) {
-      logger.info(`Using token from credential manager (${token.substring(0, 8)}...)`);
+      logger.info(`Using token from credential manager (...${token.slice(-4)})`);
     }
   }
 

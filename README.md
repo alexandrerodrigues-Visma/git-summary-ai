@@ -50,13 +50,36 @@ That's it! The tool will analyze your changes, generate a summary, and guide you
 
 **Note:** Run `git-summary-ai setup` first to configure your AI provider. Commands will guide you if setup is incomplete.
 
+## Security & Privacy
+
+⚠️ **Important**: When you run git-summary-ai, your code changes (diffs) are sent to your configured AI provider for analysis. Here's what you need to know:
+
+### What Gets Sent
+- Git diffs of your changes (up to 15,000 characters)
+- File counts and line statistics
+- Branch name
+- **NOT sent**: your actual files, git history, or any code outside the diff
+
+### Privacy Considerations
+- **Review before using**: Run this tool on public/non-sensitive projects
+- **Credentials**: git-summary-ai includes secret scanning to warn about common sensitive patterns (API keys, passwords, private keys, etc.)
+- **Trust your provider**: Ensure you trust the AI provider with your code
+- **Proprietary code**: Be cautious with proprietary or confidential codebases
+
+### Disabling Secret Scanning
+If you want to skip the secret warning prompt:
+```bash
+export SKIP_SECRET_SCAN=true
+git-summary-ai run
+```
+
 ## Supported AI Providers
 
-| Provider | Cost | Best For |
-|----------|------|----------|
-| **Claude** (Anthropic) | Free tier available | High-quality summaries |
-| **OpenAI** (GPT-4) | Pay-as-you-go | Detailed analysis |
-| **GitHub Models** | Free | Teams already on GitHub |
+| Provider | Cost | Best For | Privacy |
+|----------|------|----------|---------|
+| **Claude** (Anthropic) | Free tier available | High-quality summaries | [Anthropic Privacy Policy](https://www.anthropic.com/privacy) |
+| **OpenAI** (GPT-4) | Pay-as-you-go | Detailed analysis | [OpenAI Privacy Policy](https://openai.com/privacy/) |
+| **GitHub Models** | Free | Teams already on GitHub | GitHub internal (check GitHub privacy terms) |
 
 ## Documentation
 
