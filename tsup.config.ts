@@ -2,7 +2,7 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: ['src/index.ts'],
-  format: ['esm'],
+  format: ['esm', 'cjs'],
   dts: true,
   clean: true,
   sourcemap: true,
@@ -10,4 +10,5 @@ export default defineConfig({
   banner: {
     js: '#!/usr/bin/env node',
   },
+  external: ['keytar'],
 });

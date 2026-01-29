@@ -1,0 +1,5 @@
+{
+  "provider": "copilot",
+  "targetBranch": "staging",
+  "model": "gpt-4o"
+}

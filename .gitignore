@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# Release executables
+releases/
+
 # Environment variables
 .env
 .env.local
@@ -29,3 +32,10 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+# Development notes (not for commit)
+GITHUB_COPILOT_SETUP.md
+GITHUB_REPO_INTEGRATION.md
+GIT_NATIVE_ARCHITECTURE.md
+REFACTOR_COMPLETE.md
+TESTING_COPILOT.md
+workflow.md

@@ -5,12 +5,15 @@ import { generateAndPreviewSummary } from './summarize.js';
 import { loadConfig } from '../config/loader.js';
 import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/spinner.js';
+import { ensureSetupComplete } from '../utils/setup-check.js';
+import chalk from 'chalk';
 
 export async function commitWithSummary(options: {
   target?: string;
   message?: string;
   stageAll?: boolean;
 }): Promise<{ success: boolean; commitHash?: string }> {
+  await ensureSetupComplete('commit');
   const config = await loadConfig();
   const git = new GitService();
   const targetBranch = options.target || config.targetBranch;
@@ -86,6 +89,7 @@ export function createCommitCommand(): Command {
       });
 
       if (result.success) {
+        const branchInfo = await git.getBranchInfo();
         logger.blank();
         logger.info('Next step: Run `git-summary-ai push` to push to remote');
       }

@@ -9,6 +9,7 @@ export interface AISummaryRequest {
 }
 
 export interface AISummaryResponse {
+  title?: string;  // Optional conventional commit title
   summary: string;
   commitMessage: string;
 }

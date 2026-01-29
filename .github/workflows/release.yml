@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Build Windows executable
+        run: npx pkg dist/index.cjs --target node18-win-x64 -o ./releases/git-summary-ai-win.exe
+
+      - name: Build macOS executable
+        run: npx pkg dist/index.cjs --target node18-macos-x64 -o ./releases/git-summary-ai-macos
+
+      - name: Build Linux executable
+        run: npx pkg dist/index.cjs --target node18-linux-x64 -o ./releases/git-summary-ai-linux
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            releases/git-summary-ai-win.exe
+            releases/git-summary-ai-macos
+            releases/git-summary-ai-linux
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
