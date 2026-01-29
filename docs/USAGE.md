@@ -40,11 +40,58 @@ sudo mv git-summary-ai-* /usr/local/bin/git-summary-ai
 ## Quick Start
 
 ```bash
-# Initialize configuration
-git-summary-ai config init
+# First time: Run the setup wizard
+git-summary-ai setup
 
-# Run the complete workflow (analyze, summarize, commit, push)
+# Then use the complete workflow
 git-summary-ai run
+```
+
+## Getting Started
+
+### First-Time Setup
+
+Before using the tool, you **must** run the setup wizard:
+
+```bash
+git-summary-ai setup
+```
+
+The wizard will:
+1. Configure your AI provider (Claude, OpenAI, or GitHub Models)
+2. Choose secure credential storage (OS Keychain or environment file)
+3. Set default preferences (target branch, etc.)
+
+**Setup Detection:** Commands that require AI providers (`run`, `analyze`, `commit`, `summarize`) will automatically check if setup is complete and guide you if not. You'll see:
+
+```
+❌ Setup Required
+
+ℹ No AI provider API keys found.
+ℹ You need to configure at least one AI provider to use this tool.
+
+ℹ Available providers:
+  • Claude (Anthropic) - Recommended for best results
+  • OpenAI (GPT) - GPT-4o and other OpenAI models
+  • GitHub Models - Free tier available with GitHub account
+
+ℹ To get started, run:
+   git-summary-ai setup
+```
+
+### GitHub Authentication (for PR creation)
+
+For creating pull requests, you need GitHub authentication:
+
+**Option 1: GitHub CLI (Recommended)**
+```bash
+gh auth login
+```
+
+**Option 2: Personal Access Token**
+```bash
+git-summary-ai config credentials
+# Select GitHub and enter your token
 ```
 
 ## Commands
@@ -66,12 +113,13 @@ git-summary-ai run [options]
 | `-y, --yes` | Skip all confirmations and use defaults (useful for CI/CD) |
 
 **Workflow Steps:**
-1. Analyzes branch diff
-2. Generates AI-powered summary
-3. Previews commit message with interactive options (accept/edit/regenerate/cancel)
-4. Commits changes with AI-generated message
-5. Pushes to remote (sets upstream if needed) - if --push flag used
-6. Creates pull request - if --pr flag used
+1. Checks if setup wizard has been completed (guides you if not)
+2. Analyzes branch diff against target branch
+3. Generates AI-powered summary using configured provider
+4. Previews commit message with interactive options (accept/edit/regenerate/cancel)
+5. Stages all changes and commits with AI-generated message
+6. Pushes to remote (sets upstream if needed) - if --push flag used
+7. Creates pull request - if --pr flag used
 
 **Examples:**
 ```bash
@@ -132,22 +180,48 @@ git-summary-ai summarize [options]
 
 ### `pr` - Create Pull Request
 
-Create a GitHub pull request from your current branch.
+Create a GitHub pull request from your current branch with flexible message options.
 
 ```bash
-git-summary-ai pr [options]
+git-summary-ai pr [base-branch] [options]
 ```
+
+**Arguments:**
+| Argument | Description |
+|----------|-------------|
+| `base-branch` | Base branch to merge into (e.g., main, master) - optional, will prompt if not provided |
 
 **Options:**
 | Option | Description |
 |--------|-------------|
-| `-b, --base <branch>` | Base branch to merge into (default: main) |
 | `-t, --title <title>` | PR title (default: last commit message) |
-| `--body <body>` | PR body (default: prompt for choice) |
+| `--body <body>` | Custom PR body message |
+| `--first` | Use only the last commit message for PR body (no prompt) |
+| `--all` | Use all commit messages from this branch for PR body (no prompt) |
 | `-d, --draft` | Create as draft PR |
 
 **Authentication:**
-- Uses GitHub CLI (`gh auth token`) if available
+- Automatically uses GitHub CLI token (`gh auth token`) if available
+- Falls back to credential manager or GITHUB_TOKEN environment variable
+- Prioritizes GitHub CLI for better permissions
+
+**Examples:**
+```bash
+# Quick PR with all commits (no prompts)
+gitai pr main --all
+
+# Quick PR with last commit only
+gitai pr master --first
+
+# Interactive (choose message source)
+gitai pr main
+
+# Custom message
+gitai pr main --body "My custom PR description"
+
+# Draft PR with all commits
+gitai pr main --all --draft
+```
 - Falls back to configured GitHub token
 - Configure with: `git-summary-ai config credentials` or `gh auth login`
 

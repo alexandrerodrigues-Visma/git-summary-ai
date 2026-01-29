@@ -13,6 +13,8 @@ export async function createPullRequest(options: {
   title?: string;
   body?: string;
   draft?: boolean;
+  first?: boolean;
+  all?: boolean;
 }): Promise<{ success: boolean; url?: string }> {
   // PR command doesn't strictly need AI setup, but warn if incomplete
   await warnIfSetupIncomplete();
@@ -31,21 +33,28 @@ export async function createPullRequest(options: {
     return { success: false };
   }
 
-  // Get GitHub token
-  const credentialManager = getCredentialManager();
-  let token = await credentialManager.getApiKey('github');
-
-  // If no token found, try gh CLI as fallback for PR creation only
+  // Get GitHub token - try GitHub CLI first (more likely to have correct permissions)
+  let token: string | undefined;
+  
+  // Try GitHub CLI first
+  try {
+    const { execSync } = await import('child_process');
+    const ghToken = execSync('gh auth token', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    // Accept tokens starting with gho_, ghp_, or github_pat_
+    if (ghToken && (ghToken.startsWith('gho_') || ghToken.startsWith('ghp_') || ghToken.startsWith('github_pat_'))) {
+      token = ghToken;
+      logger.info(`Using GitHub CLI token (${ghToken.substring(0, 8)}...)`);
+    }
+  } catch (error) {
+    // GitHub CLI not available, will try credential manager
+  }
+  
+  // Fall back to credential manager if GitHub CLI not available
   if (!token) {
-    try {
-      const { execSync } = await import('child_process');
-      const ghToken = execSync('gh auth token', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-      // Accept tokens starting with gho_, ghp_, or github_pat_
-      if (ghToken && (ghToken.startsWith('gho_') || ghToken.startsWith('ghp_') || ghToken.startsWith('github_pat_'))) {
-        token = ghToken;
-      }
-    } catch {
-      // gh CLI not available
+    const credentialManager = getCredentialManager();
+    token = await credentialManager.getApiKey('github');
+    if (token) {
+      logger.info(`Using token from credential manager (${token.substring(0, 8)}...)`);
     }
   }
 
@@ -58,6 +67,7 @@ export async function createPullRequest(options: {
     return { success: false };
   }
 
+  logger.info(`Repository: ${repoInfo.owner}/${repoInfo.repo}`);
   const githubApi = new GitHubApiService(token);
 
   // Verify repository access
@@ -110,55 +120,73 @@ export async function createPullRequest(options: {
   // Determine PR body
   let prBody = options.body;
   if (!prBody) {
-    const { bodyChoice } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'bodyChoice',
-        message: 'PR body content:',
-        choices: [
-          { name: 'Use last commit message', value: 'last' },
-          { name: 'Use all commit messages from this branch', value: 'all' },
-          { name: 'Write custom message', value: 'custom' },
-        ],
-        default: 'last',
-      },
-    ]);
-
-    if (bodyChoice === 'last') {
+    // Check for flags first
+    if (options.first) {
+      // Use only the first/last commit message
       try {
         prBody = await git.getLastCommitBody();
       } catch {
         prBody = '';
       }
-    } else if (bodyChoice === 'all') {
+    } else if (options.all) {
+      // Use all commit messages from this branch
       try {
         prBody = await git.formatCommitsForPR(baseBranch!);
       } catch {
         prBody = '';
       }
     } else {
-      // Custom message
-      try {
-        const defaultBody = await git.getLastCommitBody();
-        const { customBody } = await inquirer.prompt([
-          {
-            type: 'editor',
-            name: 'customBody',
-            message: 'Edit PR body:',
-            default: defaultBody,
-          },
-        ]);
-        prBody = customBody;
-      } catch {
-        const { customBody } = await inquirer.prompt([
-          {
-            type: 'editor',
-            name: 'customBody',
-            message: 'Edit PR body:',
-            default: '',
-          },
-        ]);
-        prBody = customBody;
+      // No flag provided - show interactive choice
+      const { bodyChoice } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'bodyChoice',
+          message: 'PR body content:',
+          choices: [
+            { name: 'Use last commit message', value: 'last' },
+            { name: 'Use all commit messages from this branch', value: 'all' },
+            { name: 'Write custom message', value: 'custom' },
+          ],
+          default: 'last',
+        },
+      ]);
+
+      if (bodyChoice === 'last') {
+        try {
+          prBody = await git.getLastCommitBody();
+        } catch {
+          prBody = '';
+        }
+      } else if (bodyChoice === 'all') {
+        try {
+          prBody = await git.formatCommitsForPR(baseBranch!);
+        } catch {
+          prBody = '';
+        }
+      } else {
+        // Custom message
+        try {
+          const defaultBody = await git.getLastCommitBody();
+          const { customBody } = await inquirer.prompt([
+            {
+              type: 'editor',
+              name: 'customBody',
+              message: 'Edit PR body:',
+              default: defaultBody,
+            },
+          ]);
+          prBody = customBody;
+        } catch {
+          const { customBody } = await inquirer.prompt([
+            {
+              type: 'editor',
+              name: 'customBody',
+              message: 'Edit PR body:',
+              default: '',
+            },
+          ]);
+          prBody = customBody;
+        }
       }
     }
   }
@@ -190,11 +218,17 @@ export async function createPullRequest(options: {
 export function createPrCommand(): Command {
   return new Command('pr')
     .description('Create a GitHub pull request')
-    .option('-b, --base <branch>', 'Base branch to merge into (default: main)')
+    .argument('[base]', 'Base branch to merge into (e.g., main, master)')
     .option('-t, --title <title>', 'PR title (default: last commit message)')
-    .option('--body <body>', 'PR body (default: last commit body)')
+    .option('--body <body>', 'Custom PR body message')
+    .option('--first', 'Use only the first/last commit message for PR body')
+    .option('--all', 'Use all commit messages from this branch for PR body')
     .option('-d, --draft', 'Create as draft PR')
-    .action(async (options) => {
+    .action(async (base, options) => {
+      // Set base from argument if provided
+      if (base) {
+        options.base = base;
+      }
       const git = new GitService();
 
       // Check if in a git repository

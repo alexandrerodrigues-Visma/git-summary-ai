@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-01-29
+
+### Added
+- **Setup Detection**: Commands now automatically verify if setup wizard has been completed
+  - Provides helpful guidance if configuration is missing
+  - Shows available AI providers and setup instructions
+  - Prevents cryptic errors during command execution
+- **Enhanced PR Command**: Major UX improvements for pull request creation
+  - `--first` flag: Use only the last commit message (no prompts)
+  - `--all` flag: Use all commit messages from branch (no prompts)
+  - Accept base branch as argument: `gitai pr main` instead of being prompted
+  - Interactive mode still available when no flags provided
+- **Smart Token Management**: Improved GitHub authentication
+  - GitHub CLI token now prioritized over credential manager
+  - Better error messages for token issues
+  - Automatic fallback to credential manager if GitHub CLI unavailable
+
+### Fixed
+- **Run Command**: Now properly commits changes after generating summary (was missing commit step)
+- **GitHub Token Validation**: Fixed token detection to accept `gho_`, `ghp_`, and `github_pat_` prefixes
+- **Setup Wizard**: Corrected GitHub CLI detection to work with actual token formats
+
+### Changed
+- GitHub CLI token now preferred over credential manager for PR creation (better permissions)
+- Setup wizard detection improved for more reliable PR readiness checks
+- Documentation updated with new command syntax and setup requirements
+
 ## [0.1.0] - 2026-01-29
 
 ### Added

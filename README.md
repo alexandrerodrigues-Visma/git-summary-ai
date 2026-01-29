@@ -13,8 +13,9 @@ A CLI tool that generates intelligent commit messages and automates your Git wor
 - 🎯 **Smart Branch Analysis** - Automatic remote detection and tracking
 - ✏️ **Interactive Editing** - Review and refine before committing
 - 🔐 **Secure Credentials** - OS Keychain or encrypted storage
-- 🚀 **PR Creation** - Create pull requests directly from CLI
-- ⚡ **Zero Config** - Works with your existing Git setup
+- 🚀 **PR Creation** - Create pull requests directly from CLI with flexible options
+- ⚡ **Setup Detection** - Automatic validation ensures you're configured before running commands
+- 🔑 **Smart Token Management** - Automatically uses GitHub CLI token when available
 
 ## Quick Start
 
@@ -35,14 +36,19 @@ Follow the interactive wizard to configure your AI provider and preferences.
 ### Basic Usage
 
 ```bash
-# Complete workflow
+# Complete workflow (requires setup first)
 git-summary-ai run
 
 # With automatic push and PR
 git-summary-ai run --push --pr main
+
+# Quick PR with all commit messages
+gitai pr main --all
 ```
 
 That's it! The tool will analyze your changes, generate a summary, and guide you through the rest.
+
+**Note:** Run `git-summary-ai setup` first to configure your AI provider. Commands will guide you if setup is incomplete.
 
 ## Supported AI Providers
 
@@ -77,6 +83,15 @@ git-summary-ai push
 ```bash
 # Complete workflow with PR
 git-summary-ai run --push --pr main
+
+# Quick PR using all commit messages
+gitai pr main --all
+
+# Quick PR using last commit only
+gitai pr main --first
+
+# Interactive PR (choose message source)
+gitai pr main
 ```
 
 ### Team Collaboration
@@ -125,3 +140,9 @@ npm link
 ## License
 
 MIT
+
+---
+
+<div align="center">
+  <sub>Built with ✨ vibe coding using Claude Code and GitHub Copilot</sub>
+</div>
