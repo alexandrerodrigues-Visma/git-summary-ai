@@ -40,7 +40,8 @@ export async function createPullRequest(options: {
     try {
       const { execSync } = await import('child_process');
       const ghToken = execSync('gh auth token', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-      if (ghToken && ghToken.startsWith('gh')) {
+      // Accept tokens starting with gho_, ghp_, or github_pat_
+      if (ghToken && (ghToken.startsWith('gho_') || ghToken.startsWith('ghp_') || ghToken.startsWith('github_pat_'))) {
         token = ghToken;
       }
     } catch {

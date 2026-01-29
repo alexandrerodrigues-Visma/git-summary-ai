@@ -522,7 +522,8 @@ async function checkGitHubCLI(): Promise<boolean> {
       stdio: ['pipe', 'pipe', 'ignore'] 
     }).trim();
     
-    return !!(ghToken && ghToken.startsWith('gh'));
+    // Accept tokens starting with gho_, ghp_, or github_pat_
+    return !!(ghToken && (ghToken.startsWith('gho_') || ghToken.startsWith('ghp_') || ghToken.startsWith('github_pat_')));
   } catch {
     return false;
   }
