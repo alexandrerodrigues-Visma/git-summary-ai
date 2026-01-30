@@ -1,6 +1,6 @@
 {
   "name": "git-summary-ai",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A CLI tool that pushes code with AI-generated commit summaries to help team code reviews",
   "main": "dist/index.js",
   "bin": {
