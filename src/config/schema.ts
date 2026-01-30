@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const configSchema = z.object({
-  provider: z.enum(['claude', 'openai']).default('claude'),
+  provider: z.enum(['claude', 'openai', 'copilot']).default('claude'),
   model: z.string().optional(),
   maxTokens: z.number().positive().default(1024),
   targetBranch: z.string().default('main'),

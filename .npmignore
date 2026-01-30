@@ -1,0 +1,46 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Configuration
+tsconfig.json
+tsup.config.ts
+
+# Development files
+.github/
+tests/
+*.test.*
+*.spec.*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Documentation (keep README.md, remove others)
+workflow.md
+MIGRATION-GUIDE.md
+GIT_NATIVE_ARCHITECTURE.md
+REFACTOR_COMPLETE.md
+
+# Build artifacts
+releases/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Git
+.git/
+.gitignore

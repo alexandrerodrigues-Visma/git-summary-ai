@@ -1,20 +1,16 @@
 import type { AISummaryRequest } from '../services/ai/ai.interface.js';
+import { scanForSecrets, formatSecretWarning } from '../services/security/secret-scanner.js';
 
 export function buildSummaryPrompt(request: AISummaryRequest): string {
   return `You are a helpful assistant that generates clear, concise commit summaries for code reviews.
 
-Analyze the following git diff and generate:
-1. A detailed summary for reviewers
-2. A concise commit message (max 72 characters for the first line)
+Analyze the following git diff and generate a detailed, topic-grouped commit message.
 
 ## Context
 - Branch: ${request.branchName}
 - Files changed: ${request.filesChanged.length}
 - Lines added: +${request.stats.insertions}
 - Lines removed: -${request.stats.deletions}
-
-## Files Modified
-${request.filesChanged.map(f => `- ${f}`).join('\n')}
 
 ## Git Diff
 \`\`\`diff
@@ -24,16 +20,36 @@ ${truncateDiff(request.diff, 15000)}
 ## Output Format
 Respond in the following JSON format only, with no additional text:
 {
-  "summary": "## What Changed\\n- Point 1\\n- Point 2\\n\\n## Why It Matters for Reviewers\\n- Review focus 1\\n- Review focus 2\\n\\n## Breaking Changes\\n- None (or list them)",
-  "commitMessage": "feat: short description\\n\\nLonger description if needed"
+  "title": "feat: short conventional commit title (max 72 chars)",
+  "summary": "## Primary changes\\n- Key change 1\\n- Key change 2\\n\\n## Security\\n- Security-related changes",
+  "commitMessage": "Combined title + summary for backward compatibility"
 }
 
-Guidelines:
-- Focus on WHAT changed and WHY it matters for reviewers
-- Highlight areas that need careful review (security, performance, breaking changes)
-- Use conventional commit format (feat:, fix:, refactor:, docs:, etc.)
-- Keep the summary concise but informative
-- Mention specific files/functions if they're critical to review`;
+Guidelines for the title:
+- Use conventional commit format: type(scope): description
+- Types: feat, fix, refactor, docs, test, perf, chore, style, ci, build
+- Keep under 72 characters
+- Be specific but concise
+- Examples: "feat: add E2E testing infrastructure", "fix: resolve encryption vulnerability"
+
+Guidelines for the detailed summary:
+- Start with a brief title line (e.g., "## Primary changes")
+- Group changes by topic area (e.g., ## Security, ## Testing, ## UI, ## API, ## Performance, ## Bug Fixes)
+- Use concise bullet points with specific details
+- Mention file names when relevant (e.g., "Files: config.tsx, route.ts")
+- Quantify when possible (e.g., "~800 lines reduced", "55 new tests", "7s vs 2.4min")
+- Highlight critical changes like security fixes, breaking changes, or performance improvements
+- Keep it scannable and action-oriented
+- This will be used as the actual git commit message, so make it informative
+
+Example:
+## Primary changes
+- Optimize E2E tests with navigation helpers (~800 lines reduced)
+- Add smoke tests for fast validation (7s vs 2.4min full suite)
+
+## Security
+- Fix critical encryption vulnerability: replace fixed IV with random IV
+- Files: encryption.ts, migration-utils.ts`;
 }
 
 function truncateDiff(diff: string, maxLength: number): string {
@@ -47,16 +63,31 @@ function truncateDiff(diff: string, maxLength: number): string {
   return truncated.slice(0, lastNewline) + '\n\n[... diff truncated for length ...]';
 }
 
-export function parseAIResponse(response: string): { summary: string; commitMessage: string } {
+export function checkSecretsInDiff(diff: string): string {
+  // Allow skipping secret scan via environment variable
+  if (process.env.SKIP_SECRET_SCAN === 'true') {
+    return '';
+  }
+
+  const result = scanForSecrets(diff);
+  return result.hasSecrets ? formatSecretWarning(result) : '';
+}
+
+export function parseAIResponse(response: string): { title?: string; summary: string; commitMessage: string } {
   // Try to extract JSON from the response
   const jsonMatch = response.match(/\{[\s\S]*\}/);
 
   if (jsonMatch) {
     try {
       const parsed = JSON.parse(jsonMatch[0]);
+      const title = parsed.title || '';
+      const summary = parsed.summary || 'Unable to generate summary';
+      const commitMessage = title && summary ? `${title}\n\n${summary}` : (parsed.commitMessage || summary);
+      
       return {
-        summary: parsed.summary || 'Unable to generate summary',
-        commitMessage: parsed.commitMessage || 'chore: update code',
+        title,
+        summary,
+        commitMessage,
       };
     } catch {
       // Fall through to fallback
@@ -66,6 +97,6 @@ export function parseAIResponse(response: string): { summary: string; commitMess
   // Fallback: use the whole response as summary
   return {
     summary: response,
-    commitMessage: 'chore: update code',
+    commitMessage: response,
   };
 }

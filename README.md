@@ -1,165 +1,147 @@
 # git-summary-ai
 
-A CLI tool that pushes code with AI-generated commit summaries to help team code reviews.
+> AI-powered commit summaries and pull request automation for better code reviews
+
+## Overview
+
+A CLI tool that generates intelligent commit messages and automates your Git workflow using AI. Perfect for teams who want meaningful commit history without the manual effort.
 
 ## Features
 
-- Analyze branch diffs against target branches
-- Generate AI-powered commit summaries using Claude or OpenAI
-- Interactive preview and editing of commit messages
-- Full workflow automation (analyze → summarize → commit → push)
-- Flexible configuration via config files or environment variables
+- 🤖 **AI-Powered Summaries** - Claude, OpenAI, or GitHub Models
+- 🔄 **Full Workflow Automation** - Analyze → Summarize → Commit → Push → PR
+- 🎯 **Smart Branch Analysis** - Automatic remote detection and tracking
+- ✏️ **Interactive Editing** - Review and refine before committing
+- 🔐 **Secure Credentials** - OS Keychain or encrypted storage
+- 🚀 **PR Creation** - Create pull requests directly from CLI with flexible options
+- ⚡ **Setup Detection** - Automatic validation ensures you're configured before running commands
+- 🔑 **Smart Token Management** - Automatically uses GitHub CLI token when available
 
-## Installation
+## Quick Start
+
+### Installation
 
 ```bash
 npm install -g git-summary-ai
 ```
 
-Or install locally in your project:
+### Setup
 
 ```bash
-npm install git-summary-ai
+git-summary-ai setup
 ```
 
-## Setup
+Follow the interactive wizard to configure your AI provider and preferences.
 
-### 1. Initialize Configuration
+### Basic Usage
 
 ```bash
-git-summary-ai config init
+# Complete workflow (requires setup first)
+git-summary-ai run
+
+# With automatic push and PR
+git-summary-ai run --push --pr main
+
+# Quick PR with all commit messages
+gitai pr main --all
 ```
 
-This will create a `.git-summary-airc.json` config file and optionally a `.env` file for API keys.
+That's it! The tool will analyze your changes, generate a summary, and guide you through the rest.
 
-### 2. Set API Keys
+**Note:** Run `git-summary-ai setup` first to configure your AI provider. Commands will guide you if setup is incomplete.
 
-Set your API key as an environment variable:
+## Security & Privacy
 
+⚠️ **Important**: When you run git-summary-ai, your code changes (diffs) are sent to your configured AI provider for analysis. Here's what you need to know:
+
+### What Gets Sent
+- Git diffs of your changes (up to 15,000 characters)
+- File counts and line statistics
+- Branch name
+- **NOT sent**: your actual files, git history, or any code outside the diff
+
+### Privacy Considerations
+- **Review before using**: Run this tool on public/non-sensitive projects
+- **Credentials**: git-summary-ai includes secret scanning to warn about common sensitive patterns (API keys, passwords, private keys, etc.)
+- **Trust your provider**: Ensure you trust the AI provider with your code
+- **Proprietary code**: Be cautious with proprietary or confidential codebases
+
+### Disabling Secret Scanning
+If you want to skip the secret warning prompt:
 ```bash
-# For Claude (Anthropic)
-export CLAUDE_API_KEY=your-api-key
-
-# For OpenAI
-export OPENAI_API_KEY=your-api-key
-```
-
-Or add them to your `.env` file:
-
-```env
-CLAUDE_API_KEY=your-api-key
-OPENAI_API_KEY=your-api-key
-```
-
-## Usage
-
-### Full Workflow (Recommended)
-
-```bash
+export SKIP_SECRET_SCAN=true
 git-summary-ai run
 ```
 
-This runs the complete workflow:
-1. Analyze your branch diff
-2. Generate an AI summary
-3. Preview and confirm the commit message
-4. Commit and push to remote
+## Supported AI Providers
 
-### Individual Commands
+| Provider | Cost | Best For | Privacy |
+|----------|------|----------|---------|
+| **Claude** (Anthropic) | Free tier available | High-quality summaries | [Anthropic Privacy Policy](https://www.anthropic.com/privacy) |
+| **OpenAI** (GPT-4) | Pay-as-you-go | Detailed analysis | [OpenAI Privacy Policy](https://openai.com/privacy/) |
+| **GitHub Models** | Free | Teams already on GitHub | GitHub internal (check GitHub privacy terms) |
 
+## Documentation
+
+- 📖 [Usage Guide](docs/USAGE.md) - Complete command reference
+- 🔧 [Configuration](docs/USAGE.md#configuration) - Customization options
+- 🤝 [Contributing](docs/CONTRIBUTING.md) - Development guide
+- 📝 [Changelog](docs/CHANGELOG.md) - Version history
+
+## Common Workflows
+
+### Daily Development
 ```bash
-# Analyze branch diff
+# Analyze what changed
 git-summary-ai analyze
 
-# Generate AI summary with preview
+# Generate and commit
 git-summary-ai summarize
 
-# Commit with AI-generated message
-git-summary-ai commit
-
-# Push to remote
+# Push changes
 git-summary-ai push
-
-# Show current configuration
-git-summary-ai config show
 ```
 
-### Options
-
+### Pull Request Creation
 ```bash
-# Compare against a specific branch
-git-summary-ai run -t develop
+# Complete workflow with PR
+git-summary-ai run --push --pr main
 
-# Skip confirmations (CI/CD mode)
-git-summary-ai run -y
+# Quick PR using all commit messages
+gitai pr main --all
 
-# Verbose output for analyze
-git-summary-ai analyze -v
+# Quick PR using last commit only
+gitai pr main --first
+
+# Interactive PR (choose message source)
+gitai pr main
 ```
 
-## Configuration
-
-Configuration can be set via:
-
-- `.git-summary-airc.json`
-- `.git-summary-airc.yaml`
-- `git-summary-ai.config.js`
-- `package.json` (`git-summary-ai` field)
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `provider` | `'claude'` \| `'openai'` | `'claude'` | AI provider to use |
-| `model` | `string` | Provider default | Specific model to use |
-| `maxTokens` | `number` | `1024` | Max tokens for AI response |
-| `targetBranch` | `string` | `'main'` | Default branch to compare against |
-| `excludePatterns` | `string[]` | `[]` | File patterns to exclude |
-| `language` | `string` | `'en'` | Summary language |
-
-### Example Configuration
-
-```json
-{
-  "provider": "claude",
-  "targetBranch": "main",
-  "maxTokens": 1500,
-  "excludePatterns": ["*.lock", "*.min.js"]
-}
+### Team Collaboration
+```bash
+# Compare against remote branch
+git-summary-ai run --remote
 ```
 
-## Example Output
+## Requirements
 
-```
-$ git-summary-ai run
+- Node.js 18+ or use standalone executables
+- Git repository
+- API key for chosen AI provider
+- (Optional) GitHub CLI for PR creation
 
-[1/4] Analyzing branch...
-      Branch: feature/auth
-      Files changed: 8 | Lines: +342 / -56
+## Support
 
-[2/4] Generating AI summary...
+- **Issues**: [GitHub Issues](https://github.com/alexandrerodrigues-Visma/git-summary-ai/issues)
+- **Documentation**: See [docs/USAGE.md](docs/USAGE.md) for detailed information
 
-[3/4] Preview:
-┌────────────────────────────────────────────┐
-│ ## What Changed                            │
-│ - Implemented JWT authentication service   │
-│ - Added login/logout API endpoints         │
-│                                            │
-│ ## Why It Matters for Reviewers            │
-│ - Security: Review token handling          │
-│ - Check password hashing (line 45-67)      │
-│                                            │
-│ ## Breaking Changes                        │
-│ - /api/user now requires auth              │
-└────────────────────────────────────────────┘
+## License
 
-? Accept this summary? (Y/n/edit)
+MIT
 
-[4/4] Committing and pushing...
-      Done! Ready for review.
-```
+---
 
-## Development
+**Command Alias**: You can also use `gitai` as a shorthand for `git-summary-ai`
 
 ```bash
 # Install dependencies
@@ -181,3 +163,9 @@ npm link
 ## License
 
 MIT
+
+---
+
+<div align="center">
+  <sub>Built with ✨ vibe coding using Claude Code and GitHub Copilot</sub>
+</div>
