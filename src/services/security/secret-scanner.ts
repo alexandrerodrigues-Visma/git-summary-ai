@@ -111,7 +111,8 @@ export function formatSecretWarning(result: SecretDetectionResult): string {
     return '';
   }
 
-  const riskEmoji = {
+  const riskEmoji: Record<SecretDetectionResult['riskLevel'], string> = {
+    none: '',
     low: '⚠️',
     medium: '⚠️',
     high: '🔴',
