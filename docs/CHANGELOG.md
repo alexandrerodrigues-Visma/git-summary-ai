@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Setup Wizard**: Corrected GitHub CLI detection to work with actual token formats
 
 ### Changed
+- **Node.js Requirement**: Now requires Node.js 20+ (updated from 18+)
 - GitHub CLI token now preferred over credential manager for PR creation (better permissions)
 - Setup wizard detection improved for more reliable PR readiness checks
 - Documentation updated with new command syntax and setup requirements

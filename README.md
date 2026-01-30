@@ -125,7 +125,7 @@ git-summary-ai run --remote
 
 ## Requirements
 
-- Node.js 18+ or use standalone executables
+- Node.js 20+ or use standalone executables
 - Git repository
 - API key for chosen AI provider
 - (Optional) GitHub CLI for PR creation
