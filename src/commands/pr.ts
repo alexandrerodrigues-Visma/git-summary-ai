@@ -144,7 +144,7 @@ export async function createPullRequest(options: {
           message: 'PR body content:',
           choices: [
             { name: 'Use last commit message', value: 'last' },
-            { name: 'Use all commit messages from this branch', value: 'all' },
+            { name: 'Use all commits being merged (not in target branch)', value: 'all' },
             { name: 'Write custom message', value: 'custom' },
           ],
           default: 'last',
@@ -222,7 +222,7 @@ export function createPrCommand(): Command {
     .option('-t, --title <title>', 'PR title (default: last commit message)')
     .option('--body <body>', 'Custom PR body message')
     .option('--first', 'Use only the first/last commit message for PR body')
-    .option('--all', 'Use all commit messages from this branch for PR body')
+    .option('--all', 'Use all commits being merged (not in target branch)')
     .option('-d, --draft', 'Create as draft PR')
     .action(async (base, options) => {
       // Set base from argument if provided
