@@ -222,7 +222,7 @@ export function createPrCommand(): Command {
     .option('-t, --title <title>', 'PR title (default: last commit message)')
     .option('--body <body>', 'Custom PR body message')
     .option('--first', 'Use only the first/last commit message for PR body')
-    .option('--all', 'Use all commits being merged (commits not in target branch)')
+    .option('--all', 'Use all commits being merged (not in target branch)')
     .option('-d, --draft', 'Create as draft PR')
     .action(async (base, options) => {
       // Set base from argument if provided

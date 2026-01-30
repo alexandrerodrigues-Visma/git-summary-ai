@@ -14,9 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevents cryptic errors during command execution
 - **Enhanced PR Command**: Major UX improvements for pull request creation
   - `--first` flag: Use only the last commit message (no prompts)
-  - `--all` flag: Use all commit messages from branch (no prompts)
+  - `--all` flag: Use all commits being merged to target branch (no prompts)
   - Accept base branch as argument: `gitai pr main` instead of being prompted
   - Interactive mode still available when no flags provided
+  - Clarified wording: "commits being merged" instead of ambiguous "all commits"
 - **Smart Token Management**: Improved GitHub authentication
   - GitHub CLI token now prioritized over credential manager
   - Better error messages for token issues
