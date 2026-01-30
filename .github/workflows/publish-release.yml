@@ -66,9 +66,9 @@ jobs:
 
       - name: Build executables
         run: |
-          npx pkg dist/index.cjs --target node20-win-x64 -o ./releases/git-summary-ai-win.exe
-          npx pkg dist/index.cjs --target node20-macos-x64 -o ./releases/git-summary-ai-macos
-          npx pkg dist/index.cjs --target node20-linux-x64 -o ./releases/git-summary-ai-linux
+          npx @yao-pkg/pkg dist/index.cjs --target node20-win-x64 -o ./releases/git-summary-ai-win.exe
+          npx @yao-pkg/pkg dist/index.cjs --target node20-macos-x64 -o ./releases/git-summary-ai-macos
+          npx @yao-pkg/pkg dist/index.cjs --target node20-linux-x64 -o ./releases/git-summary-ai-linux
 
       - name: Create Git tag
         run: |

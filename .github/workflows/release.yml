@@ -29,13 +29,13 @@ jobs:
         run: npm run build
 
       - name: Build Windows executable
-        run: npx pkg dist/index.cjs --target node20-win-x64 -o ./releases/git-summary-ai-win.exe
+        run: npx @yao-pkg/pkg dist/index.cjs --target node20-win-x64 -o ./releases/git-summary-ai-win.exe
 
       - name: Build macOS executable
-        run: npx pkg dist/index.cjs --target node20-macos-x64 -o ./releases/git-summary-ai-macos
+        run: npx @yao-pkg/pkg dist/index.cjs --target node20-macos-x64 -o ./releases/git-summary-ai-macos
 
       - name: Build Linux executable
-        run: npx pkg dist/index.cjs --target node20-linux-x64 -o ./releases/git-summary-ai-linux
+        run: npx @yao-pkg/pkg dist/index.cjs --target node20-linux-x64 -o ./releases/git-summary-ai-linux
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
