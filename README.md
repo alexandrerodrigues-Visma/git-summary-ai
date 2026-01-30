@@ -107,7 +107,7 @@ git-summary-ai push
 # Complete workflow with PR
 git-summary-ai run --push --pr main
 
-# Quick PR using all commit messages
+# Quick PR with all commits being merged
 gitai pr main --all
 
 # Quick PR using last commit only

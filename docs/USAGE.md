@@ -197,7 +197,7 @@ git-summary-ai pr [base-branch] [options]
 | `-t, --title <title>` | PR title (default: last commit message) |
 | `--body <body>` | Custom PR body message |
 | `--first` | Use only the last commit message for PR body (no prompt) |
-| `--all` | Use all commit messages from this branch for PR body (no prompt) |
+| `--all` | Use all commits being merged (commits not in target branch) |
 | `-d, --draft` | Create as draft PR |
 
 **Authentication:**
@@ -207,7 +207,7 @@ git-summary-ai pr [base-branch] [options]
 
 **Examples:**
 ```bash
-# Quick PR with all commits (no prompts)
+# Quick PR with all commits being merged (no prompts)
 gitai pr main --all
 
 # Quick PR with last commit only
