@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { AIService, AISummaryRequest, AISummaryResponse } from './ai.interface.js';
 import { buildSummaryPrompt, parseAIResponse } from '../../prompts/summary.prompt.js';
-import { getApiKeyAsync } from '../../config/loader.js';
+import { getApiKeyAsync, getPromptTemplate } from '../../config/loader.js';
 
 export class ClaudeService implements AIService {
   private client: Anthropic | null = null;
@@ -37,7 +37,8 @@ export class ClaudeService implements AIService {
 
   async generateSummary(request: AISummaryRequest): Promise<AISummaryResponse> {
     const client = await this.ensureClient();
-    const prompt = buildSummaryPrompt(request);
+    const template = await getPromptTemplate();
+    const prompt = buildSummaryPrompt(request, request.customInstructions, template);
 
     const message = await client.messages.create({
       model: this.model,

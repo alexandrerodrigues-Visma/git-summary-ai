@@ -6,6 +6,7 @@ export interface AISummaryRequest {
     insertions: number;
     deletions: number;
   };
+  customInstructions?: string;
 }
 
 export interface AISummaryResponse {

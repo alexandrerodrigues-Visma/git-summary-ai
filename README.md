@@ -9,6 +9,7 @@ A CLI tool that generates intelligent commit messages and automates your Git wor
 ## Features
 
 - 🤖 **AI-Powered Summaries** - Claude, OpenAI, or GitHub Models
+- 🎨 **Custom Prompt Templates** - Tailor AI output to your team's format
 - 🔄 **Full Workflow Automation** - Analyze → Summarize → Commit → Push → PR
 - 🎯 **Smart Branch Analysis** - Automatic remote detection and tracking
 - ✏️ **Interactive Editing** - Review and refine before committing
@@ -95,8 +96,20 @@ git-summary-ai run
 # Analyze what changed
 git-summary-ai analyze
 
-# Generate and commit
+# Generate and commit with default AI provider
 git-summary-ai summarize
+
+# Change default provider globally
+git-summary-ai config set-provider copilot
+
+# Set default model for a provider
+git-summary-ai config set-model copilot gpt-4o
+
+# Use specific AI provider for one command
+git-summary-ai summarize --provider copilot
+
+# Use specific model
+git-summary-ai summarize --provider copilot --model gpt-4o
 
 # Push changes
 git-summary-ai push
@@ -104,8 +117,11 @@ git-summary-ai push
 
 ### Pull Request Creation
 ```bash
-# Complete workflow with PR
+# Complete workflow with PR using default provider
 git-summary-ai run --push --pr main
+
+# Complete workflow with specific provider
+git-summary-ai run --push --pr main --provider copilot
 
 # Quick PR with all commits being merged
 gitai pr main --all
@@ -115,6 +131,19 @@ gitai pr main --first
 
 # Interactive PR (choose message source)
 gitai pr main
+```
+
+### Customization
+```bash
+# Edit AI prompt template for custom output format
+gitai config edit-prompt-template
+
+# Set default model per provider
+gitai config set-model claude claude-sonnet-4-20250514
+gitai config set-model openai gpt-4o
+
+# List available models
+gitai config list-models
 ```
 
 ### Team Collaboration

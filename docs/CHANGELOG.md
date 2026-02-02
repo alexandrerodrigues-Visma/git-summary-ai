@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-02-02
+
+### Added
+- **AI Provider Selection**: New `--provider` flag for `summarize`, `commit`, and `run` commands
+  - Switch between configured AI providers on a per-command basis
+  - Override default provider from config without changing settings
+  - Supported providers: `claude`, `openai`, `copilot`
+  - Example: `gitai summarize --provider copilot`
+- **AI Model Selection**: New `--model` flag and model management commands
+  - Override default model per-command: `gitai summarize --model gpt-4o`
+  - Set default model per provider: `gitai config set-model copilot gpt-4o`
+  - List available models: `gitai config list-models` or `gitai config list-models <provider>`
+  - Per-provider model configuration stored in `~/.git-summary-ai/config.json`
+  - Comprehensive model catalog for all providers (Claude, OpenAI, GitHub Models)
+- **Smart Regenerate Options**: Enhanced regeneration with two modes
+  - **Same prompt**: Regenerate with original instructions (existing behavior)
+  - **Refine prompt**: Add custom instructions to refine the output
+  - Interactive prompt during regeneration to choose mode
+  - Examples of refinements: "Focus more on security", "Be more concise", "Add technical details"
+  - Custom instructions appended to base prompt for targeted improvements
+- **Custom Prompt Templates**: Full control over AI prompt structure
+  - Edit custom template: `gitai config edit-prompt-template`
+  - View current template: `gitai config show-prompt-template`
+  - Reset to default: `gitai config reset-prompt-template`
+  - **Template variables** for dynamic content:
+    - `{diff}` - The git diff content
+    - `{context}` - Branch name, files changed, line stats
+    - `{customInstructions}` - Custom refinement instructions
+  - Use cases: Company-specific formats, Jira ticket structure, multi-language support
+  - Stored in `~/.git-summary-ai/config.json` under `promptTemplate`
+- **Default Provider Management**: New `config set-provider` command
+  - Set default AI provider globally: `gitai config set-provider copilot`
+  - Validates provider is configured before allowing it to be set as default
+  - Shows helpful errors with available providers if requested one isn't configured
+  - Updates `~/.git-summary-ai/config.json` immediately
+- **Provider Configuration Validation**: Smart error handling for unconfigured providers
+  - Lists available configured providers when requested provider is missing
+  - Clear guidance to run setup wizard for configuring new providers
+  - Helpful error messages instead of cryptic API key errors
+
+### Changed
+- Setup wizard now sets the first configured provider as the default automatically
+- Provider resolution logic now validates API key availability before command execution
+- Error messages now show which providers are configured and available
+- Configuration file loading improved to preserve existing settings during setup
+- Model selection priority: explicit --model flag > config.models[provider] > config.model (legacy) > provider default
+- Regenerate action now provides interactive menu instead of immediately regenerating
+- AI summary prompt builder now accepts optional custom instructions for refinement
+- Documentation updated with provider selection, model management, regeneration, and configuration examples
+
 ## [0.2.0] - 2026-01-29
 
 ### Added
