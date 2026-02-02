@@ -4,22 +4,36 @@ A CLI tool that pushes code with AI-generated commit summaries to help team code
 
 ## Installation
 
-### Option 1: Install from Git Repository (Requires Node.js)
+### Option 1: Install from npm (Recommended)
+
+```bash
+# From public npm registry
+npm install -g git-summary-ai
+```
+
+### Option 2: Install from GitHub Packages
+
+```bash
+# Configure npm to use GitHub Packages for scoped packages
+echo "@alexandrerodrigues-visma:registry=https://npm.pkg.github.com" >> ~/.npmrc
+
+# Install
+npm install -g @alexandrerodrigues-visma/git-summary-ai
+```
+
+### Option 3: Install from Git Repository
 
 ```bash
 # Install from GitHub (HTTPS)
-npm install -g git+https://github.com/YOUR_ORG/git-summary-ai.git
+npm install -g git+https://github.com/alexandrerodrigues-Visma/git-summary-ai.git
 
 # Install from GitHub (SSH)
-npm install -g git+ssh://git@github.com:YOUR_ORG/git-summary-ai.git
-
-# Install from private repo with token
-npm install -g git+https://<TOKEN>@github.com/YOUR_ORG/git-summary-ai.git
+npm install -g git+ssh://git@github.com:alexandrerodrigues-Visma/git-summary-ai.git
 ```
 
-### Option 2: Download Standalone Executable (No Node.js required)
+### Option 4: Download Standalone Executable (No Node.js required)
 
-Download the executable for your platform from the [Releases](../../releases) page:
+Download the executable for your platform from the [Releases](https://github.com/alexandrerodrigues-Visma/git-summary-ai/releases) page:
 
 | Platform | File |
 |----------|------|

@@ -9,6 +9,7 @@ import { logger } from '../utils/logger.js';
 import { openApiKeyPage, getApiKeyPageUrl } from '../utils/browser.js';
 import { validateApiKey } from '../services/api-key-validator.js';
 import { getCredentialManager, type StoragePreference } from '../services/credentials/index.js';
+import { ModelFetcherService, ModelCacheService } from '../services/models/index.js';
 import type { Config } from '../config/schema.js';
 
 type Provider = 'claude' | 'openai' | 'copilot' | 'gemini';
@@ -355,7 +356,17 @@ async function configureProvider(
       const modelSpinner = ora('Fetching available models...').start();
       const modelChoices = await getModelChoices(provider, trimmedKey);
       modelSpinner.succeed('Models loaded');
-      
+
+      // Cache the models silently (don't interrupt flow if caching fails)
+      try {
+        const fetchResult = await ModelFetcherService.fetchModels(provider, trimmedKey);
+        if (fetchResult.success && fetchResult.models) {
+          ModelCacheService.setCachedModels(provider, fetchResult.models);
+        }
+      } catch (error) {
+        // Silent fail - caching is non-critical
+      }
+
       logger.blank();
       const { model } = await inquirer.prompt<{ model: string }>([
         {
@@ -374,7 +385,7 @@ async function configureProvider(
       try {
         const storedIn = await credentialManager.setApiKey(provider, trimmedKey, storagePreference);
         storageSpinner.succeed(`API key stored in ${storedIn}`);
-        
+
         // Return model selection to be saved in config
         return { success: true, model: selectedModel };
       } catch (error) {
@@ -411,97 +422,44 @@ async function configureProvider(
 
 async function getModelChoices(provider: Provider, apiKey: string): Promise<Array<{ name: string; value: string }>> {
   try {
-    switch (provider) {
-      case 'claude':
-        return await fetchClaudeModels(apiKey);
-      case 'openai':
-        return await fetchOpenAIModels(apiKey);
-      case 'copilot':
-        return await fetchGitHubModels(apiKey);
-      case 'gemini':
-        return getStaticModelChoices('gemini');
-      default:
-        return getStaticModelChoices(provider);
+    // Use ModelFetcherService to fetch models
+    const fetchResult = await ModelFetcherService.fetchModels(provider, apiKey);
+
+    if (fetchResult.success && fetchResult.models) {
+      // Transform to display format with recommendations
+      const choices = fetchResult.models.map((model) => {
+        let name = model.id;
+
+        // Add recommendations based on provider
+        if (provider === 'claude') {
+          if (model.id === 'claude-sonnet-4-20250514') {
+            name = `${model.id} ⭐ Recommended`;
+          }
+        } else if (provider === 'openai') {
+          if (model.id === 'gpt-4o') name = `${model.id} ⭐ Recommended`;
+          if (model.id.includes('mini')) name = `${model.id} (Faster, cheaper)`;
+        } else if (provider === 'copilot') {
+          if (model.id === 'gpt-4o') name = `${model.id} ⭐ Recommended`;
+          if (model.id.includes('mini')) name = `${model.id} (Faster)`;
+        } else if (provider === 'gemini') {
+          if (model.id === 'gemini-2.0-flash-exp') {
+            name = `${model.id} ⭐ Recommended`;
+          }
+        }
+
+        return { name, value: model.id };
+      });
+
+      choices.push({ name: 'Use provider default', value: 'default' });
+      return choices;
     }
+
+    // Fall back to static list on API error
+    return getStaticModelChoices(provider);
   } catch (error) {
     // Fall back to static list on error
     logger.warning('Could not fetch models dynamically, using default list');
     return getStaticModelChoices(provider);
-  }
-}
-
-async function fetchClaudeModels(apiKey: string): Promise<Array<{ name: string; value: string }>> {
-  // Anthropic doesn't expose a models endpoint, use static list
-  // But we can test the key and provide curated list
-  return getStaticModelChoices('claude');
-}
-
-async function fetchOpenAIModels(apiKey: string): Promise<Array<{ name: string; value: string }>> {
-  try {
-    const response = await fetch('https://api.openai.com/v1/models', {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch models');
-    }
-
-    const data = await response.json();
-    const models = data.data
-      .filter((model: any) => model.id.includes('gpt'))
-      .map((model: any) => model.id)
-      .sort()
-      .reverse(); // Newer models first
-
-    // Add recommended labels to known models
-    const choices = models.map((modelId: string) => {
-      let name = modelId;
-      if (modelId === 'gpt-4o') name = `${modelId} ⭐ Recommended`;
-      if (modelId.includes('mini')) name = `${modelId} (Faster, cheaper)`;
-      return { name, value: modelId };
-    });
-
-    choices.push({ name: 'Use provider default', value: 'default' });
-    return choices;
-  } catch (error) {
-    return getStaticModelChoices('openai');
-  }
-}
-
-async function fetchGitHubModels(apiKey: string): Promise<Array<{ name: string; value: string }>> {
-  try {
-    const response = await fetch('https://models.inference.ai.azure.com/models', {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch models');
-    }
-
-    const data = await response.json();
-    const models = data.data
-      .filter((model: any) => model.id.includes('gpt') || model.id.includes('o1'))
-      .map((model: any) => ({
-        id: model.id,
-        name: model.friendly_name || model.id,
-      }))
-      .sort((a: any, b: any) => b.id.localeCompare(a.id));
-
-    const choices = models.map((model: any) => {
-      let displayName = model.name;
-      if (model.id === 'gpt-4o') displayName = `${model.name} ⭐ Recommended`;
-      if (model.id.includes('mini')) displayName = `${model.name} (Faster)`;
-      return { name: displayName, value: model.id };
-    });
-
-    choices.push({ name: 'Use provider default', value: 'default' });
-    return choices;
-  } catch (error) {
-    return getStaticModelChoices('copilot');
   }
 }
 

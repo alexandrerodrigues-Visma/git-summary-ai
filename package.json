@@ -1,7 +1,10 @@
 {
-  "name": "git-summary-ai",
-  "version": "0.2.3",
+  "name": "@alexandrerodrigues-visma/git-summary-ai",
+  "version": "0.2.4",
   "description": "A CLI tool that pushes code with AI-generated commit summaries to help team code reviews",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "bin": {
     "git-summary-ai": "dist/index.js",

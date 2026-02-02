@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-02-02
+
+### Added
+- **Google Gemini Provider Support**: Full integration with Google's Gemini models
+  - Gemini 2.0 Flash (Experimental) - Latest model, fastest performance (default)
+  - Gemini 1.5 Pro - Most capable, best for complex tasks
+  - Gemini 1.5 Flash - Fast and efficient, good balance
+  - Gemini 1.5 Flash 8B - Smallest model, fastest responses
+  - Configure with: `gitai setup` and select Gemini as provider
+  - Use with: `gitai summarize --provider gemini --model gemini-1.5-pro`
+- **Dynamic Model Discovery**: Automatic detection of available models from provider APIs
+  - Fetches live model lists from Claude, OpenAI, GitHub Models, and Gemini APIs
+  - 24-hour cache system for optimal performance
+  - Three-layer fallback: Cache → API Fetch → Static Fallback
+  - Models stored in `~/.git-summary-ai/models-cache.json`
+  - New models automatically available without code updates
+  - Provider-specific API endpoints:
+    - Claude: `api.anthropic.com/v1/models`
+    - OpenAI: `api.openai.com/v1/models`
+    - GitHub Models: `models.inference.ai.azure.com/models`
+    - Gemini: `generativelanguage.googleapis.com/v1beta/models`
+- **Model Cache Management**: Smart caching with graceful degradation
+  - Persistent cache across restarts in user home directory
+  - Automatic refresh when cache expires (24h TTL)
+  - Falls back to static models if API unavailable
+  - Per-provider timestamps and validation
+- **GitHub Packages Distribution**: Package now published to GitHub Packages
+  - Install from GitHub: `npm install -g @alexandrerodrigues-visma/git-summary-ai`
+  - Automatic publishing on version changes via GitHub Actions
+  - Free for public repositories with unlimited downloads
+  - Alternative to npm registry for organizational use
+
+### Changed
+- Model listing now shows dynamically fetched models when available
+- Model validation uses live data from provider APIs when possible
+- Static model catalog serves as reliable fallback for offline use
+- Improved error handling for API fetch failures
+- Package name scoped to `@alexandrerodrigues-visma/git-summary-ai` for GitHub Packages
+- Installation documentation updated with multiple distribution options
+
 ## [0.2.3] - 2026-02-02
 
 ### Added

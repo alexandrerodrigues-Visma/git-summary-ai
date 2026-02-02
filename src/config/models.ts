@@ -134,3 +134,29 @@ export function getModelName(provider: Provider, modelId: string): string {
   const model = AVAILABLE_MODELS[provider].find(m => m.id === modelId);
   return model?.name || modelId;
 }
+
+/**
+ * Get available models dynamically (with cache and fallback)
+ * Requires API key for fresh fetch, falls back to cache or static models
+ */
+export async function getAvailableModels(
+  provider: Provider,
+  options?: { forceRefresh?: boolean; apiKey?: string }
+): Promise<Array<{ id: string; displayName: string }>> {
+  const { ModelResolverService } = await import('../services/models/index.js');
+  return ModelResolverService.getModels(provider, options?.apiKey, {
+    forceRefresh: options?.forceRefresh,
+  });
+}
+
+/**
+ * Check if a model is valid for a provider (dynamic, with API key if available)
+ */
+export async function isValidModelDynamic(
+  provider: Provider,
+  modelId: string,
+  apiKey?: string
+): Promise<boolean> {
+  const { ModelResolverService } = await import('../services/models/index.js');
+  return ModelResolverService.isValidModel(provider, modelId, apiKey);
+}

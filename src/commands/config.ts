@@ -3,11 +3,12 @@ import inquirer from 'inquirer';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
-import { loadConfig, getConfiguredProviders } from '../config/loader.js';
+import { loadConfig, getConfiguredProviders, getApiKeyAsync } from '../config/loader.js';
 import { getCredentialManager } from '../services/credentials/index.js';
 import { logger } from '../utils/logger.js';
-import { AVAILABLE_MODELS, getDefaultModel, isValidModel, type Provider } from '../config/models.js';
+import { AVAILABLE_MODELS, getDefaultModel, isValidModel, type Provider, getAvailableModels } from '../config/models.js';
 import { DEFAULT_PROMPT_TEMPLATE } from '../prompts/summary.prompt.js';
+import { ModelResolverService } from '../services/models/index.js';
 import chalk from 'chalk';
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
@@ -45,6 +46,14 @@ export function createConfigCommand(): Command {
     .command('list-models [provider]')
     .description('List available models for a provider (or all providers)')
     .action(listModels);
+
+  config
+    .command('refresh-models')
+    .description('Refresh cached model lists from provider APIs')
+    .option('-p, --provider <provider>', 'Refresh specific provider (claude, openai, copilot, gemini)')
+    .option('-f, --force', 'Force refresh even if cache is not expired')
+    .option('--clear', 'Clear cache and use static models')
+    .action(refreshModels);
 
   config
     .command('edit-prompt-template')
@@ -138,7 +147,7 @@ async function showConfig(): Promise<void> {
 
 async function setDefaultProvider(provider: string): Promise<void> {
   // Validate provider
-  const validProviders = ['claude', 'openai', 'copilot'];
+  const validProviders = ['claude', 'openai', 'copilot', 'gemini'];
   if (!validProviders.includes(provider)) {
     logger.error(`Invalid provider: ${provider}`);
     logger.info(`Valid providers: ${validProviders.join(', ')}`);
@@ -147,7 +156,7 @@ async function setDefaultProvider(provider: string): Promise<void> {
 
   // Check if provider is configured
   const configuredProviders = await getConfiguredProviders();
-  if (!configuredProviders.includes(provider as 'claude' | 'openai' | 'copilot')) {
+  if (!configuredProviders.includes(provider as Provider)) {
     logger.error(`Provider '${provider}' is not configured.`);
     if (configuredProviders.length > 0) {
       logger.info(`Configured providers: ${configuredProviders.join(', ')}`);
@@ -159,7 +168,7 @@ async function setDefaultProvider(provider: string): Promise<void> {
   // Load current config and update provider
   const globalConfigDir = join(homedir(), '.git-summary-ai');
   const configPath = join(globalConfigDir, 'config.json');
-  
+
   let config: any = {};
   try {
     const content = await readFile(configPath, 'utf-8');
@@ -184,7 +193,7 @@ async function setDefaultProvider(provider: string): Promise<void> {
 
 async function setDefaultModel(provider: string, model: string): Promise<void> {
   // Validate provider
-  const validProviders = ['claude', 'openai', 'copilot'];
+  const validProviders = ['claude', 'openai', 'copilot', 'gemini'];
   if (!validProviders.includes(provider)) {
     logger.error(`Invalid provider: ${provider}`);
     logger.info(`Valid providers: ${validProviders.join(', ')}`);
@@ -202,15 +211,23 @@ async function setDefaultModel(provider: string, model: string): Promise<void> {
     process.exit(1);
   }
 
-  // Validate model for provider
-  if (!isValidModel(provider as Provider, model)) {
+  // Validate model for provider (check dynamic first, then static)
+  const apiKey = await getApiKeyAsync(provider as Provider);
+  const isValid = await ModelResolverService.isValidModel(
+    provider as Provider,
+    model,
+    apiKey || undefined
+  );
+
+  if (!isValid) {
     logger.error(`Invalid model '${model}' for provider '${provider}'.`);
     logger.blank();
     logger.info(`Available models for ${provider}:`);
-    const models = AVAILABLE_MODELS[provider as Provider];
-    models.forEach(m => {
-      const tag = m.default ? chalk.green(' (default)') : '';
-      logger.detail(m.id, `${m.name}${tag}`);
+    const dynamicModels = await getAvailableModels(provider as Provider, { apiKey: apiKey || undefined });
+    dynamicModels.forEach((m) => {
+      const staticModel = AVAILABLE_MODELS[provider as Provider].find((sm) => sm.id === m.id);
+      const tag = staticModel?.default ? chalk.green(' (default)') : '';
+      logger.detail(m.id, `${m.displayName}${tag}`);
     });
     logger.blank();
     logger.info(`Run 'gitai config list-models ${provider}' to see all available models.`);
@@ -220,7 +237,7 @@ async function setDefaultModel(provider: string, model: string): Promise<void> {
   // Load current config and update model for provider
   const globalConfigDir = join(homedir(), '.git-summary-ai');
   const configPath = join(globalConfigDir, 'config.json');
-  
+
   let config: any = {};
   try {
     const content = await readFile(configPath, 'utf-8');
@@ -253,7 +270,7 @@ async function listModels(provider?: string): Promise<void> {
 
   if (provider) {
     // Validate provider
-    const validProviders = ['claude', 'openai', 'copilot'];
+    const validProviders = ['claude', 'openai', 'copilot', 'gemini'];
     if (!validProviders.includes(provider)) {
       logger.error(`Invalid provider: ${provider}`);
       logger.info(`Valid providers: ${validProviders.join(', ')}`);
@@ -261,18 +278,38 @@ async function listModels(provider?: string): Promise<void> {
     }
 
     // Show models for specific provider
-    const providerName = provider === 'claude' ? 'Claude (Anthropic)' : provider === 'openai' ? 'OpenAI' : 'GitHub Models';
+    const providerName =
+      provider === 'claude'
+        ? 'Claude (Anthropic)'
+        : provider === 'openai'
+          ? 'OpenAI'
+          : provider === 'copilot'
+            ? 'GitHub Models'
+            : 'Google Gemini';
     logger.box(`Available Models for ${providerName}`);
     logger.blank();
 
-    const models = AVAILABLE_MODELS[provider as Provider];
+    // Get dynamic models (with fallback to static)
+    const models = await getAvailableModels(provider as Provider);
+    const staticModels = AVAILABLE_MODELS[provider as Provider];
     const config = await loadConfig();
     const configuredModel = config.models?.[provider as Provider];
 
-    models.forEach(m => {
-      const isDefault = m.default;
+    // Show cache status
+    const cacheStatus = ModelResolverService.getCacheStatus(provider as Provider);
+    if (cacheStatus.isCached && !cacheStatus.isExpired) {
+      logger.success(`Source: Cached (refreshed ${cacheStatus.age}) ✓`);
+    } else {
+      logger.warning(`Source: Static models (cache not available)`);
+      logger.info(`To refresh: ${chalk.cyan(`gitai config refresh-models --provider ${provider}`)}`);
+    }
+    logger.blank();
+
+    models.forEach((m) => {
+      const staticModel = staticModels.find((sm) => sm.id === m.id);
+      const isDefault = staticModel?.default || false;
       const isConfigured = configuredModel === m.id;
-      
+
       let status = '';
       if (isConfigured) {
         status = chalk.green(' ✓ Your default');
@@ -281,8 +318,10 @@ async function listModels(provider?: string): Promise<void> {
       }
 
       logger.info(chalk.bold(m.id) + status);
-      logger.detail('Name', m.name);
-      logger.detail('Description', m.description);
+      if (staticModel) {
+        logger.detail('Name', staticModel.name);
+        logger.detail('Description', staticModel.description);
+      }
       logger.blank();
     });
 
@@ -294,20 +333,33 @@ async function listModels(provider?: string): Promise<void> {
 
     const config = await loadConfig();
     const configuredProviders = await getConfiguredProviders();
+    const allProviders: Provider[] = ['claude', 'openai', 'copilot', 'gemini'];
 
-    for (const [providerKey, models] of Object.entries(AVAILABLE_MODELS)) {
-      const isConfigured = configuredProviders.includes(providerKey as Provider);
-      const providerName = providerKey === 'claude' ? 'Claude (Anthropic)' : providerKey === 'openai' ? 'OpenAI' : 'GitHub Models';
+    for (const providerKey of allProviders) {
+      const staticModels = AVAILABLE_MODELS[providerKey];
+      const isConfigured = configuredProviders.includes(providerKey);
+      const providerName =
+        providerKey === 'claude'
+          ? 'Claude (Anthropic)'
+          : providerKey === 'openai'
+            ? 'OpenAI'
+            : providerKey === 'copilot'
+              ? 'GitHub Models'
+              : 'Google Gemini';
       const configStatus = isConfigured ? chalk.green(' ✓') : chalk.gray(' (not configured)');
-      
+
       logger.info(chalk.bold.cyan(`${providerName}${configStatus}`));
-      
-      const configuredModel = config.models?.[providerKey as Provider];
-      
-      models.forEach(m => {
+
+      const configuredModel = config.models?.[providerKey];
+      const cacheStatus = ModelResolverService.getCacheStatus(providerKey);
+      if (cacheStatus.isCached && !cacheStatus.isExpired) {
+        logger.detail('Cache', `Updated ${cacheStatus.age}`);
+      }
+
+      staticModels.forEach((m) => {
         const isDefault = m.default;
         const isUserDefault = configuredModel === m.id;
-        
+
         let status = '';
         if (isUserDefault) {
           status = chalk.green(' ✓ your default');
@@ -317,12 +369,13 @@ async function listModels(provider?: string): Promise<void> {
 
         logger.detail(m.id, `${m.name}${status}`);
       });
-      
+
       logger.blank();
     }
 
     logger.info('To see details: ' + chalk.cyan('gitai config list-models <provider>'));
     logger.info('To set default: ' + chalk.cyan('gitai config set-model <provider> <model-id>'));
+    logger.info('To refresh cache: ' + chalk.cyan('gitai config refresh-models'));
   }
 
   logger.blank();
@@ -508,4 +561,83 @@ async function manageCredentials(): Promise<void> {
       logger.success(`Removed ${provider} credentials`);
     }
   }
+}
+
+async function refreshModels(options: any): Promise<void> {
+  logger.blank();
+
+  // Handle --clear option
+  if (options.clear) {
+    ModelResolverService.clearAllCaches();
+    logger.success('Cleared all model caches');
+    logger.info('Models will be fetched fresh on next use');
+    logger.blank();
+    return;
+  }
+
+  // Get providers to refresh
+  const allProviders: Provider[] = ['claude', 'openai', 'copilot', 'gemini'];
+  let providersToRefresh = allProviders;
+
+  if (options.provider) {
+    const validProviders = ['claude', 'openai', 'copilot', 'gemini'];
+    if (!validProviders.includes(options.provider)) {
+      logger.error(`Invalid provider: ${options.provider}`);
+      logger.info(`Valid providers: ${validProviders.join(', ')}`);
+      process.exit(1);
+    }
+    providersToRefresh = [options.provider as Provider];
+  }
+
+  logger.info('Refreshing model lists...');
+  logger.blank();
+
+  const credentialManager = getCredentialManager();
+  let successCount = 0;
+  let failureCount = 0;
+
+  for (const provider of providersToRefresh) {
+    const apiKey = await credentialManager.getApiKey(provider);
+
+    if (!apiKey) {
+      logger.detail(provider, chalk.yellow('⚠ No API key configured'));
+      failureCount++;
+      continue;
+    }
+
+    // Show spinner for refresh
+    const spinner = process.stderr.isTTY
+      ? require('ora')(`Refreshing ${provider}...`).start()
+      : null;
+
+    try {
+      const result = await ModelResolverService.refreshModels(provider, apiKey);
+
+      if (result.success) {
+        if (spinner) spinner.succeed(`${provider}: ✓ ${result.count} models fetched`);
+        else logger.success(`${provider}: ✓ ${result.count} models fetched`);
+        successCount++;
+      } else {
+        if (spinner) spinner.fail(`${provider}: ⚠ ${result.error}`);
+        else logger.warning(`${provider}: ⚠ ${result.error}`);
+        failureCount++;
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (spinner) spinner.fail(`${provider}: ✗ ${errorMessage}`);
+      else logger.error(`${provider}: ✗ ${errorMessage}`);
+      failureCount++;
+    }
+  }
+
+  logger.blank();
+  const total = successCount + failureCount;
+  if (successCount === total) {
+    logger.success(`✓ Refreshed all ${total} provider${total > 1 ? 's' : ''}`);
+  } else if (successCount > 0) {
+    logger.warning(`Refreshed ${successCount} of ${total} providers`);
+  } else {
+    logger.error(`Failed to refresh any providers`);
+  }
+  logger.blank();
 }

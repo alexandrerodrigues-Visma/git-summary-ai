@@ -22,9 +22,25 @@ A CLI tool that generates intelligent commit messages and automates your Git wor
 
 ### Installation
 
+**From npm (public registry):**
 ```bash
 npm install -g git-summary-ai
 ```
+
+**From GitHub Packages:**
+```bash
+# Configure npm to use GitHub Packages
+echo "@alexandrerodrigues-visma:registry=https://npm.pkg.github.com" >> ~/.npmrc
+
+# Install
+npm install -g @alexandrerodrigues-visma/git-summary-ai
+```
+
+**Download Standalone Executable:**
+- Download from [Releases](https://github.com/alexandrerodrigues-Visma/git-summary-ai/releases)
+- Windows: `git-summary-ai-win.exe`
+- macOS: `git-summary-ai-macos`
+- Linux: `git-summary-ai-linux`
 
 ### Setup
 
