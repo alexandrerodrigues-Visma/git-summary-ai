@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import type { AIService, AISummaryRequest, AISummaryResponse } from './ai.interface.js';
 import { buildSummaryPrompt, parseAIResponse } from '../../prompts/summary.prompt.js';
-import { getApiKeyAsync } from '../../config/loader.js';
+import { getApiKeyAsync, getPromptTemplate } from '../../config/loader.js';
 
 export class CopilotService implements AIService {
   private client: OpenAI | null = null;
@@ -44,7 +44,8 @@ export class CopilotService implements AIService {
 
   async generateSummary(request: AISummaryRequest): Promise<AISummaryResponse> {
     const client = await this.ensureClient();
-    const prompt = buildSummaryPrompt(request);
+    const template = await getPromptTemplate();
+    const prompt = buildSummaryPrompt(request, request.customInstructions, template);
 
     const completion = await client.chat.completions.create({
       model: this.model,

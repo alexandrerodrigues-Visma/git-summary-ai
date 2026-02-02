@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import inquirer from 'inquirer';
 import ora from 'ora';
 import chalk from 'chalk';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
 import { logger } from '../utils/logger.js';
@@ -176,16 +176,28 @@ This wizard will help you:
   }
 
   // Step 6: Save configuration file globally
+  // Load existing config first to preserve settings
+  const globalConfigDir = join(homedir(), '.git-summary-ai');
+  const configPath = join(globalConfigDir, 'config.json');
+  
+  let existingConfig: Partial<Config> = {};
+  try {
+    const content = await readFile(configPath, 'utf-8');
+    existingConfig = JSON.parse(content);
+  } catch {
+    // No existing config, that's fine
+  }
+
   const config: Partial<Config> = {
+    ...existingConfig,
+    // Only set provider if not already set, or if we configured a new one
     ...(defaultProvider && { provider: defaultProvider }),
+    // If no existing provider and we just configured one, use it as default
+    ...(!existingConfig.provider && defaultProvider && { provider: defaultProvider }),
     ...(targetBranch && { targetBranch }),
     ...(selectedModel && { model: selectedModel }),
   };
 
-  // Save to global config directory
-  const globalConfigDir = join(homedir(), '.git-summary-ai');
-  const configPath = join(globalConfigDir, 'config.json');
-  
   // Ensure directory exists
   await mkdir(globalConfigDir, { recursive: true });
   await writeFile(configPath, JSON.stringify(config, null, 2));

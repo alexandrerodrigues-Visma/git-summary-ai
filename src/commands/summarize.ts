@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { GitService } from '../services/git.service.js';
 import { createAIService } from '../services/ai/index.js';
-import { loadConfig, validateApiKeyAsync } from '../config/loader.js';
+import { loadConfig, validateApiKeyAsync, resolveProvider, getModelForProvider } from '../config/loader.js';
 import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/spinner.js';
 import { ensureSetupComplete } from '../utils/setup-check.js';
@@ -19,10 +19,19 @@ export interface SummaryResult {
 export async function generateAndPreviewSummary(options: {
   target?: string;
   skipPreview?: boolean;
+  provider?: string;
+  model?: string;
+  customPrompt?: string;
 }): Promise<SummaryResult | null> {
   await ensureSetupComplete('summarize');
   const config = await loadConfig();
   const git = new GitService();
+  
+  // Resolve and validate AI provider
+  const provider = await resolveProvider(options.provider);
+  
+  // Get the model to use
+  const model = await getModelForProvider(provider, options.model);
   
   // Smart target branch detection:
   // 1. Use explicit --target flag if provided (compare against different branch)
@@ -35,7 +44,7 @@ export async function generateAndPreviewSummary(options: {
   }
 
   // Validate API key
-  await validateApiKeyAsync(config.provider);
+  await validateApiKeyAsync(provider);
 
   // Get diff summary
   const diffSummary = await withSpinner(
@@ -71,7 +80,7 @@ export async function generateAndPreviewSummary(options: {
   }
 
   // Create AI service and generate summary
-  const aiService = await createAIService(config);
+  const aiService = await createAIService({ ...config, provider, model });
 
   const result = await withSpinner(
     `Generating summary with ${aiService.getProviderName()}...`,
@@ -84,6 +93,7 @@ export async function generateAndPreviewSummary(options: {
           insertions: diffSummary.stats.insertions,
           deletions: diffSummary.stats.deletions,
         },
+        customInstructions: options.customPrompt,
       })
   );
 
@@ -138,6 +148,50 @@ export async function generateAndPreviewSummary(options: {
     }
 
     if (action === 'regenerate') {
+      logger.blank();
+      
+      // Ask how to regenerate
+      const { regenerateType } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'regenerateType',
+          message: 'How would you like to regenerate?',
+          choices: [
+            { name: 'Regenerate with same prompt', value: 'same' },
+            { name: 'Refine prompt and regenerate', value: 'refine' },
+            { name: 'Back', value: 'back' },
+          ],
+        },
+      ]);
+
+      if (regenerateType === 'back') {
+        continue; // Go back to previous menu
+      }
+
+      if (regenerateType === 'refine') {
+        logger.blank();
+        logger.info('Enter additional instructions to refine the summary generation:');
+        logger.detail('Examples', 'Focus more on security changes, Be more concise, Add more technical details');
+        logger.blank();
+
+        const { customPrompt } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'customPrompt',
+            message: 'Additional instructions:',
+            validate: (input: string) => {
+              if (!input || input.trim() === '') {
+                return 'Please provide instructions or choose "Regenerate with same prompt"';
+              }
+              return true;
+            },
+          },
+        ]);
+
+        return generateAndPreviewSummary({ ...options, customPrompt: customPrompt.trim() });
+      }
+
+      // regenerateType === 'same'
       return generateAndPreviewSummary(options);
     }
 
@@ -198,6 +252,8 @@ export function createSummarizeCommand(): Command {
     .description('Generate AI summary with preview (auto-detects comparison branch)')
     .option('-t, --target <branch>', 'Target branch to compare against (default: tracking branch or main)')
     .option('-y, --yes', 'Skip preview confirmation')
+    .option('-p, --provider <provider>', 'AI provider to use (claude, openai, copilot)')
+    .option('--model <model>', 'AI model to use (overrides default for provider)')
     .action(async (options) => {
       const git = new GitService();
 
@@ -220,6 +276,8 @@ export function createSummarizeCommand(): Command {
       const result = await generateAndPreviewSummary({
         target: options.target,
         skipPreview: options.yes,
+        provider: options.provider,
+        model: options.model,
       });
 
       if (result?.accepted) {

@@ -1,5 +1,6 @@
 import { cosmiconfig } from 'cosmiconfig';
 import { configSchema, defaultConfig, type Config } from './schema.js';
+import { getDefaultModel, type Provider } from './models.js';
 import dotenv from 'dotenv';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
@@ -99,4 +100,83 @@ export async function validateApiKeyAsync(provider: 'claude' | 'openai' | 'copil
       `Missing API key. Please set ${envVar} environment variable or run 'git-summary-ai setup'`
     );
   }
+}
+
+/**
+ * Get all configured AI providers with available API keys
+ */
+export async function getConfiguredProviders(): Promise<Array<'claude' | 'openai' | 'copilot'>> {
+  const credentialManager = getCredentialManager();
+  const providers: Array<'claude' | 'openai' | 'copilot'> = [];
+  
+  for (const provider of ['claude', 'openai', 'copilot'] as const) {
+    const key = await credentialManager.getApiKey(provider);
+    if (key) {
+      providers.push(provider);
+    }
+  }
+  
+  return providers;
+}
+
+/**
+ * Validate and resolve the AI provider to use
+ * Checks if provider is configured, falls back to config default if not specified
+ */
+export async function resolveProvider(requestedProvider?: string): Promise<'claude' | 'openai' | 'copilot'> {
+  const config = await loadConfig();
+  const provider = (requestedProvider || config.provider) as 'claude' | 'openai' | 'copilot';
+  
+  // Check if the provider has an API key configured
+  const key = await getApiKeyAsync(provider);
+  if (!key) {
+    const configuredProviders = await getConfiguredProviders();
+    
+    if (configuredProviders.length === 0) {
+      throw new Error(
+        `No AI providers configured. Please run 'git-summary-ai setup' to configure an AI provider.`
+      );
+    }
+    
+    throw new Error(
+      `Provider '${provider}' is not configured. Available providers: ${configuredProviders.join(', ')}.\n` +
+      `Run 'git-summary-ai setup' to configure ${provider}.`
+    );
+  }
+  
+  return provider;
+}
+
+/**
+ * Get the model to use for a provider
+ * Priority: explicit model param > config.models[provider] > config.model (legacy) > default for provider
+ */
+export async function getModelForProvider(provider: 'claude' | 'openai' | 'copilot', explicitModel?: string): Promise<string> {
+  if (explicitModel) {
+    return explicitModel;
+  }
+
+  const config = await loadConfig();
+  
+  // Check provider-specific model configuration
+  if (config.models?.[provider]) {
+    return config.models[provider]!;
+  }
+  
+  // Fall back to legacy global model config
+  if (config.model) {
+    return config.model;
+  }
+  
+  // Use provider default
+  return getDefaultModel(provider as Provider);
+}
+
+/**
+ * Get the custom prompt template from config
+ * Returns undefined if no custom template is set
+ */
+export async function getPromptTemplate(): Promise<string | undefined> {
+  const config = await loadConfig();
+  return config.promptTemplate;
 }

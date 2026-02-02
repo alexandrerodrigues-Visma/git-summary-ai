@@ -12,6 +12,8 @@ export async function commitWithSummary(options: {
   target?: string;
   message?: string;
   stageAll?: boolean;
+  provider?: string;
+  model?: string;
 }): Promise<{ success: boolean; commitHash?: string }> {
   await ensureSetupComplete('commit');
   const config = await loadConfig();
@@ -31,7 +33,7 @@ export async function commitWithSummary(options: {
 
   // If no message provided, generate one
   if (!commitMessage) {
-    const result = await generateAndPreviewSummary({ target: targetBranch });
+    const result = await generateAndPreviewSummary({ target: targetBranch, provider: options.provider, model: options.model });
 
     if (!result?.accepted) {
       return { success: false };
@@ -72,6 +74,8 @@ export function createCommitCommand(): Command {
     .option('-t, --target <branch>', 'Target branch to compare against')
     .option('-m, --message <message>', 'Use custom commit message instead of generating')
     .option('-a, --all', 'Stage all changes before committing')
+    .option('-p, --provider <provider>', 'AI provider to use (claude, openai, copilot)')
+    .option('--model <model>', 'AI model to use (overrides default for provider)')
     .action(async (options) => {
       const git = new GitService();
 
@@ -86,6 +90,8 @@ export function createCommitCommand(): Command {
         target: options.target,
         message: options.message,
         stageAll: options.all,
+        provider: options.provider,
+        model: options.model,
       });
 
       if (result.success) {

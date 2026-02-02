@@ -1,20 +1,16 @@
 import type { AISummaryRequest } from '../services/ai/ai.interface.js';
 import { scanForSecrets, formatSecretWarning } from '../services/security/secret-scanner.js';
 
-export function buildSummaryPrompt(request: AISummaryRequest): string {
-  return `You are a helpful assistant that generates clear, concise commit summaries for code reviews.
+export const DEFAULT_PROMPT_TEMPLATE = `You are a helpful assistant that generates clear, concise commit summaries for code reviews.
 
-Analyze the following git diff and generate a detailed, topic-grouped commit message.
+Analyze the following git diff and generate a detailed, topic-grouped commit message.{customInstructions}
 
 ## Context
-- Branch: ${request.branchName}
-- Files changed: ${request.filesChanged.length}
-- Lines added: +${request.stats.insertions}
-- Lines removed: -${request.stats.deletions}
+{context}
 
 ## Git Diff
 \`\`\`diff
-${truncateDiff(request.diff, 15000)}
+{diff}
 \`\`\`
 
 ## Output Format
@@ -50,6 +46,27 @@ Example:
 ## Security
 - Fix critical encryption vulnerability: replace fixed IV with random IV
 - Files: encryption.ts, migration-utils.ts`;
+
+export function buildSummaryPrompt(request: AISummaryRequest, customInstructions?: string, template?: string): string {
+  // Use custom template or fall back to default
+  const promptTemplate = template || DEFAULT_PROMPT_TEMPLATE;
+
+  // Build context string
+  const context = `- Branch: ${request.branchName}
+- Files changed: ${request.filesChanged.length}
+- Lines added: +${request.stats.insertions}
+- Lines removed: -${request.stats.deletions}`;
+
+  // Build custom instructions string
+  const customInstructionsText = customInstructions 
+    ? `\n\n## Additional Instructions from User\n${customInstructions}\n`
+    : '';
+
+  // Substitute template variables
+  return promptTemplate
+    .replace('{diff}', truncateDiff(request.diff, 15000))
+    .replace('{context}', context)
+    .replace('{customInstructions}', customInstructionsText);
 }
 
 function truncateDiff(diff: string, maxLength: number): string {

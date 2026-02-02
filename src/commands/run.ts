@@ -14,6 +14,8 @@ export function createRunCommand(): Command {
     .option('-y, --yes', 'Skip confirmations (use defaults)')
     .option('--push', 'Push commits after committing')
     .option('--pr <base>', 'Create pull request to specified base branch after pushing')
+    .option('-p, --provider <provider>', 'AI provider to use (claude, openai, copilot)')
+    .option('--model <model>', 'AI model to use (overrides default for provider)')
     .action(async (options) => {
       await ensureSetupComplete('run');
       const git = new GitService();
@@ -38,6 +40,8 @@ export function createRunCommand(): Command {
       const result = await generateAndPreviewSummary({
         target: options.target,
         skipPreview: options.yes,
+        provider: options.provider,
+        model: options.model,
       });
 
       if (!result?.accepted) {
