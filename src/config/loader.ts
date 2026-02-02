@@ -63,12 +63,15 @@ async function loadGlobalConfig(): Promise<Partial<Config>> {
  * Get API key synchronously from environment variables only.
  * Use getApiKeyAsync for full credential manager support.
  */
-export function getApiKey(provider: 'claude' | 'openai' | 'copilot'): string | undefined {
+export function getApiKey(provider: 'claude' | 'openai' | 'copilot' | 'gemini'): string | undefined {
   if (provider === 'claude') {
     return process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
   }
   if (provider === 'openai') {
     return process.env.OPENAI_API_KEY;
+  }
+  if (provider === 'gemini') {
+    return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   }
   return process.env.GITHUB_TOKEN;
 }
@@ -77,25 +80,25 @@ export function getApiKey(provider: 'claude' | 'openai' | 'copilot'): string | u
  * Get API key asynchronously with full credential manager support.
  * Checks: environment variables -> keychain -> .env files
  */
-export async function getApiKeyAsync(provider: 'claude' | 'openai' | 'copilot'): Promise<string | undefined> {
+export async function getApiKeyAsync(provider: 'claude' | 'openai' | 'copilot' | 'gemini'): Promise<string | undefined> {
   const credentialManager = getCredentialManager();
   return credentialManager.getApiKey(provider);
 }
 
-export function validateApiKey(provider: 'claude' | 'openai' | 'copilot'): void {
+export function validateApiKey(provider: 'claude' | 'openai' | 'copilot' | 'gemini'): void {
   const key = getApiKey(provider);
   if (!key) {
-    const envVar = provider === 'claude' ? 'CLAUDE_API_KEY' : provider === 'openai' ? 'OPENAI_API_KEY' : 'GITHUB_TOKEN';
+    const envVar = provider === 'claude' ? 'CLAUDE_API_KEY' : provider === 'openai' ? 'OPENAI_API_KEY' : provider === 'gemini' ? 'GEMINI_API_KEY' : 'GITHUB_TOKEN';
     throw new Error(
       `Missing API key. Please set ${envVar} environment variable or run 'git-summary-ai setup'`
     );
   }
 }
 
-export async function validateApiKeyAsync(provider: 'claude' | 'openai' | 'copilot'): Promise<void> {
+export async function validateApiKeyAsync(provider: 'claude' | 'openai' | 'copilot' | 'gemini'): Promise<void> {
   const key = await getApiKeyAsync(provider);
   if (!key) {
-    const envVar = provider === 'claude' ? 'CLAUDE_API_KEY' : provider === 'openai' ? 'OPENAI_API_KEY' : 'GITHUB_TOKEN';
+    const envVar = provider === 'claude' ? 'CLAUDE_API_KEY' : provider === 'openai' ? 'OPENAI_API_KEY' : provider === 'gemini' ? 'GEMINI_API_KEY' : 'GITHUB_TOKEN';
     throw new Error(
       `Missing API key. Please set ${envVar} environment variable or run 'git-summary-ai setup'`
     );
@@ -105,17 +108,17 @@ export async function validateApiKeyAsync(provider: 'claude' | 'openai' | 'copil
 /**
  * Get all configured AI providers with available API keys
  */
-export async function getConfiguredProviders(): Promise<Array<'claude' | 'openai' | 'copilot'>> {
+export async function getConfiguredProviders(): Promise<Array<'claude' | 'openai' | 'copilot' | 'gemini'>> {
   const credentialManager = getCredentialManager();
-  const providers: Array<'claude' | 'openai' | 'copilot'> = [];
-  
-  for (const provider of ['claude', 'openai', 'copilot'] as const) {
+  const providers: Array<'claude' | 'openai' | 'copilot' | 'gemini'> = [];
+
+  for (const provider of ['claude', 'openai', 'copilot', 'gemini'] as const) {
     const key = await credentialManager.getApiKey(provider);
     if (key) {
       providers.push(provider);
     }
   }
-  
+
   return providers;
 }
 
@@ -123,9 +126,9 @@ export async function getConfiguredProviders(): Promise<Array<'claude' | 'openai
  * Validate and resolve the AI provider to use
  * Checks if provider is configured, falls back to config default if not specified
  */
-export async function resolveProvider(requestedProvider?: string): Promise<'claude' | 'openai' | 'copilot'> {
+export async function resolveProvider(requestedProvider?: string): Promise<'claude' | 'openai' | 'copilot' | 'gemini'> {
   const config = await loadConfig();
-  const provider = (requestedProvider || config.provider) as 'claude' | 'openai' | 'copilot';
+  const provider = (requestedProvider || config.provider) as 'claude' | 'openai' | 'copilot' | 'gemini';
   
   // Check if the provider has an API key configured
   const key = await getApiKeyAsync(provider);
@@ -151,7 +154,7 @@ export async function resolveProvider(requestedProvider?: string): Promise<'clau
  * Get the model to use for a provider
  * Priority: explicit model param > config.models[provider] > config.model (legacy) > default for provider
  */
-export async function getModelForProvider(provider: 'claude' | 'openai' | 'copilot', explicitModel?: string): Promise<string> {
+export async function getModelForProvider(provider: 'claude' | 'openai' | 'copilot' | 'gemini', explicitModel?: string): Promise<string> {
   if (explicitModel) {
     return explicitModel;
   }

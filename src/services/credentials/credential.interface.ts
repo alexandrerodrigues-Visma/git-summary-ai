@@ -1,4 +1,4 @@
-export type ApiProvider = 'claude' | 'openai' | 'copilot' | 'github';
+export type ApiProvider = 'claude' | 'openai' | 'copilot' | 'gemini' | 'github';
 
 export interface CredentialStorage {
   /** Get an API key for a provider */

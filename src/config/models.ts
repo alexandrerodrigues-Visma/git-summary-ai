@@ -81,6 +81,32 @@ export const AVAILABLE_MODELS = {
       default: false,
     },
   ],
+  gemini: [
+    {
+      id: 'gemini-2.0-flash-exp',
+      name: 'Gemini 2.0 Flash (Experimental)',
+      description: 'Latest model, fastest performance',
+      default: true,
+    },
+    {
+      id: 'gemini-1.5-pro',
+      name: 'Gemini 1.5 Pro',
+      description: 'Most capable, best for complex tasks',
+      default: false,
+    },
+    {
+      id: 'gemini-1.5-flash',
+      name: 'Gemini 1.5 Flash',
+      description: 'Fast and efficient, good balance',
+      default: false,
+    },
+    {
+      id: 'gemini-1.5-flash-8b',
+      name: 'Gemini 1.5 Flash 8B',
+      description: 'Smallest model, fastest responses',
+      default: false,
+    },
+  ],
 } as const;
 
 export type Provider = keyof typeof AVAILABLE_MODELS;

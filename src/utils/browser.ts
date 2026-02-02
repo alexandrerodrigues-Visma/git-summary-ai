@@ -4,6 +4,7 @@ export const API_URLS = {
   claude: 'https://console.anthropic.com/settings/keys',
   openai: 'https://platform.openai.com/api-keys',
   copilot: 'https://github.com/settings/tokens',
+  gemini: 'https://aistudio.google.com/app/apikey',
 } as const;
 
 export type ApiProvider = keyof typeof API_URLS;

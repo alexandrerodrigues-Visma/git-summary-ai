@@ -11,7 +11,7 @@ import { validateApiKey } from '../services/api-key-validator.js';
 import { getCredentialManager, type StoragePreference } from '../services/credentials/index.js';
 import type { Config } from '../config/schema.js';
 
-type Provider = 'claude' | 'openai' | 'copilot';
+type Provider = 'claude' | 'openai' | 'copilot' | 'gemini';
 
 const MAX_VALIDATION_ATTEMPTS = 3;
 
@@ -36,6 +36,7 @@ This wizard will help you:
   const claudeKey = await credentialManager.getApiKey('claude');
   const openaiKey = await credentialManager.getApiKey('openai');
   const copilotKey = await credentialManager.getApiKey('copilot');
+  const geminiKey = await credentialManager.getApiKey('gemini');
 
   // Step 1: Provider selection with status
   const providerChoices = [
@@ -50,6 +51,10 @@ This wizard will help you:
     {
       name: `GitHub Models${copilotKey ? ' ✓ Already configured' : ''}`,
       value: 'copilot',
+    },
+    {
+      name: `Google Gemini${geminiKey ? ' ✓ Already configured' : ''}`,
+      value: 'gemini',
     },
     {
       name: 'Skip - Configure later',
@@ -266,7 +271,7 @@ async function configureProvider(
   credentialManager: ReturnType<typeof getCredentialManager>,
   storagePreference: StoragePreference
 ): Promise<{ success: boolean; model?: string }> {
-  const providerName = provider === 'claude' ? 'Claude (Anthropic)' : provider === 'openai' ? 'OpenAI' : 'GitHub Models';
+  const providerName = provider === 'claude' ? 'Claude (Anthropic)' : provider === 'openai' ? 'OpenAI' : provider === 'gemini' ? 'Google Gemini' : 'GitHub Models';
   const apiUrl = getApiKeyPageUrl(provider);
 
   logger.blank();
@@ -305,6 +310,10 @@ async function configureProvider(
       logger.detail('1', 'Sign in to your OpenAI account');
       logger.detail('2', 'Click "Create new secret key"');
       logger.detail('3', 'Copy the key (starts with sk-)');
+    } else if (provider === 'gemini') {
+      logger.detail('1', 'Sign in to your Google account');
+      logger.detail('2', 'Create an API key for your project');
+      logger.detail('3', 'Copy the key (starts with AIza)');
     } else {
       logger.detail('1', 'Sign in to your GitHub account');
       logger.detail('2', 'Go to Settings > Developer settings > Personal access tokens');
@@ -409,6 +418,8 @@ async function getModelChoices(provider: Provider, apiKey: string): Promise<Arra
         return await fetchOpenAIModels(apiKey);
       case 'copilot':
         return await fetchGitHubModels(apiKey);
+      case 'gemini':
+        return getStaticModelChoices('gemini');
       default:
         return getStaticModelChoices(provider);
     }
@@ -515,6 +526,14 @@ function getStaticModelChoices(provider: Provider): Array<{ name: string; value:
         { name: 'gpt-4o (Recommended - Most capable)', value: 'gpt-4o' },
         { name: 'gpt-4o-mini (Faster, free tier)', value: 'gpt-4o-mini' },
         { name: 'gpt-4', value: 'gpt-4' },
+        { name: 'Use provider default', value: 'default' },
+      ];
+    case 'gemini':
+      return [
+        { name: 'gemini-2.0-flash-exp (Recommended - Latest and fastest)', value: 'gemini-2.0-flash-exp' },
+        { name: 'gemini-1.5-pro (Most capable)', value: 'gemini-1.5-pro' },
+        { name: 'gemini-1.5-flash (Fast and efficient)', value: 'gemini-1.5-flash' },
+        { name: 'gemini-1.5-flash-8b (Smallest)', value: 'gemini-1.5-flash-8b' },
         { name: 'Use provider default', value: 'default' },
       ];
     default:

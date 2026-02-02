@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export type ApiProvider = 'claude' | 'openai' | 'copilot';
+export type ApiProvider = 'claude' | 'openai' | 'copilot' | 'gemini';
 
 export interface ValidationResult {
   valid: boolean;
@@ -26,6 +27,13 @@ export function validateKeyFormat(provider: ApiProvider, key: string): Validatio
   } else if (provider === 'copilot') {
     if (!trimmedKey.startsWith('ghu_') && !trimmedKey.startsWith('ghp_') && !trimmedKey.startsWith('github_pat_')) {
       return { valid: false, error: 'GitHub Token should start with "ghu_", "ghp_", or "github_pat_"' };
+    }
+  } else if (provider === 'gemini') {
+    if (!trimmedKey.startsWith('AIza')) {
+      return { valid: false, error: 'Gemini API key should start with "AIza"' };
+    }
+    if (trimmedKey.length < 39) {
+      return { valid: false, error: 'Gemini API key is too short (minimum 39 characters)' };
     }
   }
 
@@ -103,7 +111,7 @@ export async function validateCopilotKey(apiKey: string): Promise<ValidationResu
   }
 
   try {
-    const client = new OpenAI({ 
+    const client = new OpenAI({
       apiKey: apiKey.trim(),
       baseURL: 'https://models.inference.ai.azure.com',
       defaultHeaders: {
@@ -136,12 +144,48 @@ export async function validateCopilotKey(apiKey: string): Promise<ValidationResu
   }
 }
 
+export async function validateGeminiKey(apiKey: string): Promise<ValidationResult> {
+  const formatCheck = validateKeyFormat('gemini', apiKey);
+  if (!formatCheck.valid) {
+    return formatCheck;
+  }
+
+  try {
+    const client = new GoogleGenerativeAI(apiKey.trim());
+    const model = client.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+
+    // Make a minimal API call to validate the key
+    await model.generateContent('hi');
+
+    return { valid: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    // Check for specific error types
+    if (message.toLowerCase().includes('api key') || message.toLowerCase().includes('authentication')) {
+      return { valid: false, error: 'Invalid API key - authentication failed' };
+    }
+    if (message.toLowerCase().includes('quota') || message.toLowerCase().includes('rate limit')) {
+      // Rate limit means the key is valid but throttled
+      return { valid: true };
+    }
+    if (message.toLowerCase().includes('permission')) {
+      return { valid: false, error: 'API key lacks required permissions' };
+    }
+
+    return { valid: false, error: `API validation failed: ${message}` };
+  }
+}
+
 export async function validateApiKey(provider: ApiProvider, apiKey: string): Promise<ValidationResult> {
   if (provider === 'claude') {
     return validateClaudeKey(apiKey);
   }
   if (provider === 'copilot') {
     return validateCopilotKey(apiKey);
+  }
+  if (provider === 'gemini') {
+    return validateGeminiKey(apiKey);
   }
   return validateOpenAIKey(apiKey);
 }

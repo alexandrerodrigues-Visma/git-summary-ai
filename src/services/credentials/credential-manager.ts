@@ -60,8 +60,8 @@ export class CredentialManager {
    */
   async getApiKey(provider: ApiProvider): Promise<string | undefined> {
     // Check environment variables first (they always take priority)
-    const envVarName = provider === 'claude' ? 'CLAUDE_API_KEY' : provider === 'openai' ? 'OPENAI_API_KEY' : 'GITHUB_TOKEN';
-    const envAlias = provider === 'claude' ? 'ANTHROPIC_API_KEY' : undefined;
+    const envVarName = provider === 'claude' ? 'CLAUDE_API_KEY' : provider === 'openai' ? 'OPENAI_API_KEY' : provider === 'gemini' ? 'GEMINI_API_KEY' : 'GITHUB_TOKEN';
+    const envAlias = provider === 'claude' ? 'ANTHROPIC_API_KEY' : provider === 'gemini' ? 'GOOGLE_API_KEY' : undefined;
 
     if (process.env[envVarName]) {
       return process.env[envVarName];
