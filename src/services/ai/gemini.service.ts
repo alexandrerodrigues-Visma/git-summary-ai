@@ -69,7 +69,17 @@ export class GeminiService implements AIService {
     try {
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
-      return parseAIResponse(responseText);
+      
+      const usage = result.response.usageMetadata ? {
+        inputTokens: result.response.usageMetadata.promptTokenCount,
+        outputTokens: result.response.usageMetadata.candidatesTokenCount,
+        totalTokens: result.response.usageMetadata.totalTokenCount,
+      } : undefined;
+
+      return {
+        ...parseAIResponse(responseText),
+        usage,
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
 
@@ -94,5 +104,9 @@ export class GeminiService implements AIService {
 
   getProviderName(): string {
     return `Gemini (${this.model})`;
+  }
+
+  getModelName(): string {
+    return this.model;
   }
 }

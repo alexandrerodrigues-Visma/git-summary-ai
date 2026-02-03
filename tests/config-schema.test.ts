@@ -17,6 +17,8 @@ describe('Config Schema', () => {
         commitPrefix: 'feat: ',
         language: 'en',
         promptTemplate: 'Custom template',
+        showTokens: false,
+        tokenTracking: { enabled: true, retentionDays: 90 },
       };
 
       const result = configSchema.parse(validConfig);

@@ -15,6 +15,11 @@ export const configSchema = z.object({
   commitPrefix: z.string().optional(),
   language: z.string().default('en'),
   promptTemplate: z.string().optional(),
+  showTokens: z.boolean().default(false),
+  tokenTracking: z.object({
+    enabled: z.boolean().default(true),
+    retentionDays: z.number().default(365),
+  }).optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -27,4 +32,5 @@ export const defaultConfig: Config = {
   targetBranch: 'main',
   excludePatterns: [],
   language: 'en',
+  showTokens: false,
 };

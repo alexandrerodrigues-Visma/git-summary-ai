@@ -10,7 +10,7 @@ The CLI now includes automatic setup detection to prevent commands from failing 
 
 The utility function `checkSetupStatus()` verifies:
 - **Global Config**: Checks if `~/.git-summary-ai/config.json` exists
-- **API Keys**: Checks if at least one AI provider (Claude, OpenAI, or GitHub Models) has been configured
+- **API Keys**: Checks if at least one AI provider (Claude, OpenAI, GitHub Models, or Google Gemini) has been configured
 - **Configured Providers**: Returns a list of all configured providers
 
 ### Setup Enforcement
@@ -78,6 +78,7 @@ When a user tries to run a command without completing setup:
   • Claude (Anthropic) - Recommended for best results
   • OpenAI (GPT) - GPT-4o and other OpenAI models
   • GitHub Models - Free tier available with GitHub account
+  • Google Gemini - Fast responses with multimodal capabilities
 
 ℹ To get started, run:
    git-summary-ai setup

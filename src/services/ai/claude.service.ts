@@ -54,10 +54,23 @@ export class ClaudeService implements AIService {
     const textContent = message.content.find(c => c.type === 'text');
     const responseText = textContent?.type === 'text' ? textContent.text : '';
 
-    return parseAIResponse(responseText);
+    const usage = message.usage ? {
+      inputTokens: message.usage.input_tokens,
+      outputTokens: message.usage.output_tokens,
+      totalTokens: message.usage.input_tokens + message.usage.output_tokens,
+    } : undefined;
+
+    return {
+      ...parseAIResponse(responseText),
+      usage,
+    };
   }
 
   getProviderName(): string {
     return `Claude (${this.model})`;
+  }
+
+  getModelName(): string {
+    return this.model;
   }
 }

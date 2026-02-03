@@ -52,10 +52,23 @@ export class OpenAIService implements AIService {
 
     const responseText = completion.choices[0]?.message?.content || '';
 
-    return parseAIResponse(responseText);
+    const usage = completion.usage ? {
+      inputTokens: completion.usage.prompt_tokens,
+      outputTokens: completion.usage.completion_tokens,
+      totalTokens: completion.usage.total_tokens,
+    } : undefined;
+
+    return {
+      ...parseAIResponse(responseText),
+      usage,
+    };
   }
 
   getProviderName(): string {
     return `OpenAI (${this.model})`;
+  }
+
+  getModelName(): string {
+    return this.model;
   }
 }

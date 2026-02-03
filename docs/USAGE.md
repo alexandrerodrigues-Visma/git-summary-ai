@@ -72,7 +72,7 @@ git-summary-ai setup
 ```
 
 The wizard will:
-1. Configure your AI provider (Claude, OpenAI, or GitHub Models)
+1. Configure your AI provider (Claude, OpenAI, GitHub Models, or Google Gemini)
 2. Choose secure credential storage (OS Keychain or environment file)
 3. Set default preferences (target branch, etc.)
 
@@ -88,6 +88,7 @@ The wizard will:
   • Claude (Anthropic) - Recommended for best results
   • OpenAI (GPT) - GPT-4o and other OpenAI models
   • GitHub Models - Free tier available with GitHub account
+  • Google Gemini - Fast responses with multimodal capabilities
 
 ℹ To get started, run:
    git-summary-ai setup
@@ -122,7 +123,7 @@ git-summary-ai run [options]
 | Option | Description |
 |--------|-------------|
 | `-t, --target <branch>` | Target branch to compare against (overrides config) |
-| `-p, --provider <provider>` | AI provider to use: `claude`, `openai`, or `copilot` (overrides config) |
+| `-p, --provider <provider>` | AI provider to use: `claude`, `openai`, `copilot`, or `gemini` (overrides config) |
 | `--model <model>` | AI model to use (overrides default for provider) |
 | `--push` | Automatically push to remote after commit |
 | `--pr <base-branch>` | Create a pull request after pushing (implies --push) |
@@ -195,7 +196,7 @@ git-summary-ai summarize [options]
 | Option | Description |
 |--------|-------------|
 | `-t, --target <branch>` | Target branch to compare against |
-| `-p, --provider <provider>` | AI provider to use: `claude`, `openai`, or `copilot` (overrides config) |
+| `-p, --provider <provider>` | AI provider to use: `claude`, `openai`, `copilot`, or `gemini` (overrides config) |
 | `--model <model>` | AI model to use (overrides default for provider) |
 | `-y, --yes` | Skip preview confirmation and commit immediately |
 
@@ -304,6 +305,110 @@ git-summary-ai push [options]
 **Options:**
 | Option | Description |
 |--------|-------------|
+| `--force` | Force push to remote |
+
+---
+
+### `tokens` - Token Usage Tracking
+
+View and manage AI token usage statistics.
+
+```bash
+git-summary-ai tokens [subcommand] [options]
+```
+
+**Subcommands:**
+| Subcommand | Description |
+|------------|-------------|
+| *(default)* | Show summary (today, week, month) |
+| `today` | Show today's usage |
+| `week` | Show this week's usage |
+| `month` | Show this month's usage |
+| `year` | Show this year's usage |
+| `all` | Show all-time usage |
+| `export [file]` | Export usage data to JSON (default: token-usage-export.json) |
+| `clear` | Clear usage history (with confirmation) |
+
+**Features:**
+- Token counts by provider (Claude, OpenAI, GitHub Models, Gemini)
+- Token counts by model (e.g., gpt-4o, claude-3-5-sonnet)
+- Input/output token breakdown
+- Request counts and averages
+- Visual progress bars and percentages
+- Time-based filtering (day, week, month, year)
+- JSON export for custom analysis
+
+**Examples:**
+```bash
+# View summary dashboard
+git-summary-ai tokens
+
+# View today's usage
+git-summary-ai tokens today
+
+# View this month's detailed breakdown
+git-summary-ai tokens month
+
+# Export all usage data
+git-summary-ai tokens export my-usage-report.json
+
+# Clear history (requires confirmation)
+git-summary-ai tokens clear
+```
+
+**Sample Output:**
+```
+🔢 Token Usage Summary
+
+Today (Feb 3, 2026):
+  Requests: 5
+  Tokens:   25,430
+    ↑ Input:   21,250 (84%)
+    ↓ Output:  4,180 (16%)
+
+This Week:
+  Requests: 23
+  Tokens:   118,902
+
+By Provider:
+  Copilot       78,500 (66%)  ████████████████░░░░
+  Claude        40,402 (34%)  ████████░░░░░░░░░░░░
+
+Top Models:
+  1.  gpt-4o                            78,500 tokens  (  18 requests)
+  2.  claude-3-5-sonnet-20241022        40,402 tokens  (   5 requests)
+
+Average per request: 5,170 tokens
+```
+
+**Configuration:**
+Token tracking can be configured in your config file:
+```json
+{
+  "showTokens": true,              // Display tokens after each operation
+  "tokenTracking": {
+    "enabled": true,                // Enable tracking (default: true)
+    "retentionDays": 365            // Keep data for 365 days (default)
+  }
+}
+```
+
+**Storage:**
+Usage data is stored in `~/.git-summary-ai/token-usage.json`.
+
+---
+
+### `push` (continued)
+
+Push current branch to remote repository.
+
+```bash
+git-summary-ai push [options]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
 | `-u, --set-upstream` | Set upstream tracking branch |
 
 ---
@@ -317,7 +422,7 @@ git-summary-ai setup
 ```
 
 **Features:**
-- Provider selection (Claude, OpenAI, GitHub Models)
+- Provider selection (Claude, OpenAI, GitHub Models, Google Gemini)
 - Secure storage options (OS Keychain or global .env)
 - Model selection with recommendations
 - Default target branch configuration

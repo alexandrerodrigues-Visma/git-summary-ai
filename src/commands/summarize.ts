@@ -7,6 +7,7 @@ import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/spinner.js';
 import { ensureSetupComplete } from '../utils/setup-check.js';
 import { checkSecretsInDiff } from '../prompts/summary.prompt.js';
+import { getTokenTracker } from '../services/token-tracker.service.js';
 import chalk from 'chalk';
 
 export interface SummaryResult {
@@ -97,6 +98,19 @@ export async function generateAndPreviewSummary(options: {
       })
   );
 
+  // Track token usage for history (no display yet)
+  if (result.usage && config.tokenTracking?.enabled !== false) {
+    const tracker = getTokenTracker();
+    await tracker.recordUsage({
+      provider: config.provider,
+      model: aiService.getModelName(),
+      inputTokens: result.usage.inputTokens,
+      outputTokens: result.usage.outputTokens,
+      totalTokens: result.usage.totalTokens,
+      operation: 'summarize',
+    });
+  }
+
   logger.blank();
 
   if (options.skipPreview) {
@@ -125,6 +139,14 @@ export async function generateAndPreviewSummary(options: {
     logger.info('Detailed summary:');
     logger.box(finalSummary);
     logger.blank();
+
+    // Display token usage after summary, before options
+    if (result.usage && config.showTokens) {
+      logger.info(
+        `🔢 Tokens: ${result.usage.totalTokens.toLocaleString()} (↑${result.usage.inputTokens.toLocaleString()} ↓${result.usage.outputTokens.toLocaleString()})`
+      );
+      logger.blank();
+    }
 
     // Ask for confirmation
     logger.info('Options:');

@@ -12,6 +12,12 @@ releases/
 .env.local
 .env.*.local
 
+# User-specific config (project-local overrides)
+.git-summary-airc.json
+.git-summary-airc
+.git-summary-airc.yaml
+.git-summary-airc.yml
+
 # IDE
 .idea/
 .vscode/

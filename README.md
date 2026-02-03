@@ -8,7 +8,7 @@ A CLI tool that generates intelligent commit messages and automates your Git wor
 
 ## Features
 
-- 🤖 **AI-Powered Summaries** - Claude, OpenAI, or GitHub Models
+- 🤖 **AI-Powered Summaries** - Claude, OpenAI, GitHub Models, or Google Gemini
 - 🎨 **Custom Prompt Templates** - Tailor AI output to your team's format
 - 🔄 **Full Workflow Automation** - Analyze → Summarize → Commit → Push → PR
 - 🎯 **Smart Branch Analysis** - Automatic remote detection and tracking
@@ -17,6 +17,7 @@ A CLI tool that generates intelligent commit messages and automates your Git wor
 - 🚀 **PR Creation** - Create pull requests directly from CLI with flexible options
 - ⚡ **Setup Detection** - Automatic validation ensures you're configured before running commands
 - 🔑 **Smart Token Management** - Automatically uses GitHub CLI token when available
+- 📊 **Token Usage Tracking** - Monitor AI token consumption with detailed analytics
 
 ## Quick Start
 
@@ -97,6 +98,7 @@ git-summary-ai run
 | **Claude** (Anthropic) | Free tier available | High-quality summaries | [Anthropic Privacy Policy](https://www.anthropic.com/privacy) |
 | **OpenAI** (GPT-4) | Pay-as-you-go | Detailed analysis | [OpenAI Privacy Policy](https://openai.com/privacy/) |
 | **GitHub Models** | Free | Teams already on GitHub | GitHub internal (check GitHub privacy terms) |
+| **Google Gemini** | Free tier available | Fast responses, multimodal capabilities | [Google Privacy Policy](https://policies.google.com/privacy) |
 
 ## Documentation
 
@@ -166,6 +168,50 @@ gitai config list-models
 ```bash
 # Compare against remote branch
 git-summary-ai run --remote
+```
+
+### Token Usage Tracking
+```bash
+# View token usage summary
+git-summary-ai tokens
+
+# View today's usage
+git-summary-ai tokens today
+
+# View this week's usage
+git-summary-ai tokens week
+
+# View this month's usage
+git-summary-ai tokens month
+
+# View all-time usage
+git-summary-ai tokens all
+
+# Export usage data to JSON
+git-summary-ai tokens export usage-report.json
+
+# Clear usage history
+git-summary-ai tokens clear
+
+# Show tokens inline during operations (add to config)
+git-summary-ai config show  # Check current showTokens setting
+```
+
+**Inline Token Display:**
+When `showTokens` is enabled in your config, token usage appears after each AI operation:
+```
+ℹ 🔢 Tokens: 5,443 (↑4,505 ↓938)
+```
+
+**Configuration:**
+```json
+{
+  "showTokens": true,
+  "tokenTracking": {
+    "enabled": true,
+    "retentionDays": 365
+  }
+}
 ```
 
 ## Requirements

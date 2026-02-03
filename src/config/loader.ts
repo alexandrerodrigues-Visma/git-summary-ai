@@ -33,9 +33,10 @@ export async function loadConfig(): Promise<Config> {
     const result = await explorer.search();
 
     if (result?.config) {
-      const parsed = configSchema.safeParse(result.config);
+      const parsed = configSchema.partial().safeParse(result.config);
       if (parsed.success) {
-        // Merge: global config < project config
+        // Merge: default < global < project
+        // Only fields explicitly set in project config will override global config
         return { ...defaultConfig, ...globalConfig, ...parsed.data };
       }
     }

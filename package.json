@@ -1,7 +1,12 @@
 {
   "name": "@alexandrerodrigues-visma/git-summary-ai",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "A CLI tool that pushes code with AI-generated commit summaries to help team code reviews",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },

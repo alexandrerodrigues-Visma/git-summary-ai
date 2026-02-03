@@ -22,7 +22,7 @@
         ┌───────────────────┐    ┌──────────────────────┐
         │ Check Global      │    │ Check API Keys       │
         │ Config File       │    │ (Claude/OpenAI/      │
-        │ ~/.git-summary-ai │    │  GitHub)             │
+        │ ~/.git-summary-ai │    │  GitHub/Gemini)      │
         │ /config.json      │    │                      │
         └─────────┬─────────┘    └──────────┬───────────┘
                   │                           │
@@ -100,6 +100,7 @@ Configuration Locations Checked:
       • CLAUDE_API_KEY or ANTHROPIC_API_KEY
       • OPENAI_API_KEY
       • GITHUB_TOKEN
+      • GOOGLE_API_KEY or GEMINI_API_KEY
    
    b) OS Keychain (macOS/Windows):
       • Secure system storage
