@@ -45,7 +45,7 @@ export async function createPullRequest(options: {
       token = ghToken;
       logger.info(`Using GitHub CLI token (...${ghToken.slice(-4)})`);
     }
-  } catch (error) {
+  } catch (_error) {
     // GitHub CLI not available, will try credential manager
   }
   
@@ -130,10 +130,14 @@ export async function createPullRequest(options: {
       }
     } else if (options.all) {
       // Use all commit messages from this branch
-      try {
-        prBody = await git.formatCommitsForPR(baseBranch!);
-      } catch {
+      if (!baseBranch) {
         prBody = '';
+      } else {
+        try {
+          prBody = await git.formatCommitsForPR(baseBranch);
+        } catch {
+          prBody = '';
+        }
       }
     } else {
       // No flag provided - show interactive choice
@@ -158,10 +162,14 @@ export async function createPullRequest(options: {
           prBody = '';
         }
       } else if (bodyChoice === 'all') {
-        try {
-          prBody = await git.formatCommitsForPR(baseBranch!);
-        } catch {
+        if (!baseBranch) {
           prBody = '';
+        } else {
+          try {
+            prBody = await git.formatCommitsForPR(baseBranch);
+          } catch {
+            prBody = '';
+          }
         }
       } else {
         // Custom message
@@ -193,6 +201,12 @@ export async function createPullRequest(options: {
 
   // Create the PR
   logger.blank();
+
+  if (!prTitle || !baseBranch) {
+    logger.error('PR title and base branch are required');
+    return { success: false };
+  }
+
   const prUrl = await withSpinner(
     `Creating PR: ${currentBranch} → ${baseBranch}...`,
     async () => {
@@ -200,10 +214,10 @@ export async function createPullRequest(options: {
         repoInfo.owner,
         repoInfo.repo,
         {
-          title: prTitle!,
+          title: prTitle,
           body: prBody || '',
           head: currentBranch,
-          base: baseBranch!,
+          base: baseBranch,
           draft: options.draft || false,
         }
       );

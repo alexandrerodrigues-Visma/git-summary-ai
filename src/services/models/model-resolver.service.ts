@@ -1,5 +1,4 @@
-import type { Provider } from '../../config/schema';
-import { AVAILABLE_MODELS } from '../../config/models';
+import { AVAILABLE_MODELS, type Provider } from '../../config/models';
 import { ModelCacheService } from './model-cache.service';
 import { ModelFetcherService } from './model-fetcher.service';
 import type { CachedModel, GetModelsOptions, RefreshResult } from './types';

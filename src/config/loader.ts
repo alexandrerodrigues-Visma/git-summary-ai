@@ -162,8 +162,9 @@ export async function getModelForProvider(provider: 'claude' | 'openai' | 'copil
   const config = await loadConfig();
   
   // Check provider-specific model configuration
-  if (config.models?.[provider]) {
-    return config.models[provider]!;
+  const providerModel = config.models?.[provider];
+  if (providerModel) {
+    return providerModel;
   }
   
   // Fall back to legacy global model config

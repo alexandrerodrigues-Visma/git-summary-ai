@@ -6,7 +6,6 @@ import { loadConfig } from '../config/loader.js';
 import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/spinner.js';
 import { ensureSetupComplete } from '../utils/setup-check.js';
-import chalk from 'chalk';
 
 export async function commitWithSummary(options: {
   target?: string;
@@ -59,8 +58,13 @@ export async function commitWithSummary(options: {
   }
 
   // Commit
+  if (!commitMessage) {
+    logger.error('Commit message is required');
+    return { success: false };
+  }
+
   const commitHash = await withSpinner('Creating commit...', () =>
-    git.commit(commitMessage!)
+    git.commit(commitMessage)
   );
 
   logger.success(`Committed: ${commitHash.slice(0, 7)}`);
@@ -95,7 +99,7 @@ export function createCommitCommand(): Command {
       });
 
       if (result.success) {
-        const branchInfo = await git.getBranchInfo();
+        const _branchInfo = await git.getBranchInfo();
         logger.blank();
         logger.info('Next step: Run `git-summary-ai push` to push to remote');
       }

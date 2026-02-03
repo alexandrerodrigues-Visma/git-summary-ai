@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import type { Provider } from '../../config/schema';
+import type { Provider } from '../../config/models';
 import type { CachedModel, ModelsCache, ProviderCache } from './types';
 
 const CACHE_DIR = join(homedir(), '.git-summary-ai');

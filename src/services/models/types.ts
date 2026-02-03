@@ -1,4 +1,4 @@
-import type { Provider } from '../../config/schema';
+import type { Provider } from '../../config/models';
 
 /**
  * Normalized model structure for caching

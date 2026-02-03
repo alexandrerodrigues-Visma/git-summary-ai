@@ -17,7 +17,6 @@ export async function openApiKeyPage(provider: ApiProvider): Promise<void> {
     throw new Error('Invalid URL: Only HTTPS URLs are allowed');
   }
   
-  // eslint-disable-next-line @aikido/no-unsafe-file-inclusion
   // Safe: Opening browser to predefined HTTPS URLs only
   await open(url);
 }

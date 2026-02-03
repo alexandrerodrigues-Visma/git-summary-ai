@@ -7,6 +7,7 @@ import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/spinner.js';
 import { ensureSetupComplete } from '../utils/setup-check.js';
 import chalk from 'chalk';
+import type { Config } from '../config/schema.js';
 
 export function createAnalyzeCommand(): Command {
   return new Command('analyze')
@@ -26,7 +27,7 @@ export function createAnalyzeCommand(): Command {
     });
 }
 
-async function analyzeLocal(config: any, options: any): Promise<void> {
+async function analyzeLocal(config: Config, options: { files?: string[]; verbose?: boolean; target?: string }): Promise<void> {
   const git = new GitService();
 
   // Check if in a git repository
@@ -85,7 +86,7 @@ async function analyzeLocal(config: any, options: any): Promise<void> {
   }
 }
 
-async function analyzeRemote(config: any, options: any): Promise<void> {
+async function analyzeRemote(config: Config, options: { branch?: string; verbose?: boolean; target?: string }): Promise<void> {
   const git = new GitService();
 
   // Check if in a git repository

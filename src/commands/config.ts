@@ -6,7 +6,8 @@ import { homedir } from 'os';
 import { loadConfig, getConfiguredProviders, getApiKeyAsync } from '../config/loader.js';
 import { getCredentialManager } from '../services/credentials/index.js';
 import { logger } from '../utils/logger.js';
-import { AVAILABLE_MODELS, getDefaultModel, isValidModel, type Provider, getAvailableModels } from '../config/models.js';
+import { AVAILABLE_MODELS, type Provider, getAvailableModels } from '../config/models.js';
+import type { Config } from '../config/schema.js';
 import { DEFAULT_PROMPT_TEMPLATE } from '../prompts/summary.prompt.js';
 import { ModelResolverService } from '../services/models/index.js';
 import chalk from 'chalk';
@@ -169,7 +170,7 @@ async function setDefaultProvider(provider: string): Promise<void> {
   const globalConfigDir = join(homedir(), '.git-summary-ai');
   const configPath = join(globalConfigDir, 'config.json');
 
-  let config: any = {};
+  let config: Partial<Config> = {};
   try {
     const content = await readFile(configPath, 'utf-8');
     config = JSON.parse(content);
@@ -177,7 +178,7 @@ async function setDefaultProvider(provider: string): Promise<void> {
     // Config doesn't exist yet, will be created
   }
 
-  config.provider = provider;
+  config.provider = provider as Provider;
 
   // Ensure directory exists and save
   await mkdir(globalConfigDir, { recursive: true });
@@ -238,7 +239,7 @@ async function setDefaultModel(provider: string, model: string): Promise<void> {
   const globalConfigDir = join(homedir(), '.git-summary-ai');
   const configPath = join(globalConfigDir, 'config.json');
 
-  let config: any = {};
+  let config: Partial<Config> = {};
   try {
     const content = await readFile(configPath, 'utf-8');
     config = JSON.parse(content);
@@ -251,7 +252,7 @@ async function setDefaultModel(provider: string, model: string): Promise<void> {
     config.models = {};
   }
 
-  config.models[provider] = model;
+  config.models[provider as Provider] = model;
 
   // Ensure directory exists and save
   await mkdir(globalConfigDir, { recursive: true });
@@ -443,7 +444,7 @@ async function editPromptTemplate(): Promise<void> {
   // Update config
   await mkdir(join(homedir(), '.git-summary-ai'), { recursive: true });
   
-  let existingConfig: any = {};
+  let existingConfig: Partial<Config> = {};
   if (existsSync(configPath)) {
     const content = await readFile(configPath, 'utf-8');
     existingConfig = JSON.parse(content);
@@ -557,13 +558,13 @@ async function manageCredentials(): Promise<void> {
     ]);
 
     if (provider !== 'Cancel') {
-      await credentialManager.deleteApiKey(provider as any);
+      await credentialManager.deleteApiKey(provider as Provider);
       logger.success(`Removed ${provider} credentials`);
     }
   }
 }
 
-async function refreshModels(options: any): Promise<void> {
+async function refreshModels(options: { clear?: boolean; provider?: string }): Promise<void> {
   logger.blank();
 
   // Handle --clear option

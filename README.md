@@ -180,26 +180,41 @@ git-summary-ai run --remote
 - **Issues**: [GitHub Issues](https://github.com/alexandrerodrigues-Visma/git-summary-ai/issues)
 - **Documentation**: See [docs/USAGE.md](docs/USAGE.md) for detailed information
 
-## License
+## Documentation
 
-MIT
+- 📖 **[USAGE.md](docs/USAGE.md)** - Comprehensive command reference and examples
+- 🧪 **[TESTING.md](TESTING.md)** - How to run and write tests
+- 🤝 **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** - Contribution guidelines
+- 📦 **[GITHUB_PACKAGES.md](docs/GITHUB_PACKAGES.md)** - Publishing to GitHub Packages
+- 🔍 **[SETUP_DETECTION.md](docs/SETUP_DETECTION.md)** - How setup validation works
+- 📝 **[CHANGELOG.md](docs/CHANGELOG.md)** - Version history and release notes
 
----
-
-**Command Alias**: You can also use `gitai` as a shorthand for `git-summary-ai`
+## Development
 
 ```bash
 # Install dependencies
 npm install
 
-# Build
+# Build the project
 npm run build
 
 # Run in development (watch mode)
 npm run dev
 
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
 # Type check
 npm run typecheck
+
+# Lint code
+npm run lint
+
+# Full validation (typecheck + lint + test)
+npm run validate
 
 # Link for local testing
 npm link

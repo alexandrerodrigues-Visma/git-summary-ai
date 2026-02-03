@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import ora from 'ora';
-import chalk from 'chalk';
 import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
@@ -363,7 +362,7 @@ async function configureProvider(
         if (fetchResult.success && fetchResult.models) {
           ModelCacheService.setCachedModels(provider, fetchResult.models);
         }
-      } catch (error) {
+      } catch (_error) {
         // Silent fail - caching is non-critical
       }
 
@@ -456,7 +455,7 @@ async function getModelChoices(provider: Provider, apiKey: string): Promise<Arra
 
     // Fall back to static list on API error
     return getStaticModelChoices(provider);
-  } catch (error) {
+  } catch (_error) {
     // Fall back to static list on error
     logger.warning('Could not fetch models dynamically, using default list');
     return getStaticModelChoices(provider);

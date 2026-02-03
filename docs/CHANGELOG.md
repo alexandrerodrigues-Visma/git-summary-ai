@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2026-02-02
+
+### Added
+- **Comprehensive Test Suite**: Implemented extensive test coverage across all core services
+  - **219 total tests** (up from 37 baseline tests)
+  - **90.14% overall code coverage** (exceeded 60% target by +30.14%)
+  - Added 182 new tests across 3 implementation phases
+  - Phase 1: Critical security & core functionality tests (98 tests)
+  - Phase 2: Integration & edge case tests (43 tests)
+  - Phase 3: Git service comprehensive testing (41 tests)
+- **Security Scanner Tests**: 100% coverage with 23 tests
+  - GitHub token detection (ghp_, gho_)
+  - AWS credentials (access & secret keys)
+  - Private keys (RSA/PEM)
+  - Database URLs with embedded credentials
+  - API tokens (Slack, Stripe)
+  - False positive handling
+  - Environment variable override support
+- **Configuration Tests**: 90.32% coverage with 31 tests
+  - API key resolution (sync & async)
+  - Provider validation
+  - Model configuration
+  - Config merging (global + local)
+  - Corrupted config handling
+  - Environment variable priority
+- **Credential Management Tests**: 90.78% coverage with 34 tests
+  - Multi-storage fallback (keychain → env → global)
+  - API key CRUD operations
+  - Storage preference configuration
+  - Singleton pattern validation
+  - Error resilience
+- **GitHub API Tests**: 100% coverage with 21 tests
+  - Repository listing with pagination
+  - Branch operations and comparison
+  - Pull request creation with error handling (404/422)
+  - Repository access verification
+  - File content retrieval
+  - Diff generation
+- **Git Service Tests**: 95% coverage with 61 tests
+  - Repository validation and branch information
+  - Diff generation against target branches
+  - Merge-base resolution with fallbacks
+  - Commit operations (stage, commit, push)
+  - Remote URL parsing (SSH/HTTPS)
+  - Tracking branch management
+  - Commit log and message formatting
+  - PR body generation from commits
+  - Edge cases: empty repos, detached HEAD, merge conflicts
+  - Error handling: network timeouts, permission errors, corrupted repos
+  - Binary files, renamed files, large diffs
+- **Model Resolver Tests**: 75.67% coverage with 22 tests
+  - Model fetching with cache/API/static fallback chain
+  - Provider refresh operations
+  - Cache integration and invalidation
+  - Error handling for API failures
+- **Prompt Parser Tests**: 86.95% coverage with 10 tests
+  - JSON parsing with title/summary extraction
+  - Malformed JSON handling
+  - Fallback to raw responses
+  - Nested object support
+  - Empty response handling
+
+### Changed
+- Improved test infrastructure with Vitest v4.0.18
+- Enhanced mocking strategies for external dependencies
+  - Simple-git mocked for git operations
+  - Octokit class-based mocking for GitHub API
+  - File system operations mocked for config tests
+  - Keychain mocked for credential tests
+- All critical code paths now covered with automated tests
+- Established comprehensive test plan document (`.test-plan.md`)
+- Test coverage reporting integrated into CI/CD pipeline
+
+### Fixed
+- Improved error handling across all services through comprehensive testing
+- Enhanced edge case handling in git operations
+- Better fallback mechanisms in model resolution
+- More robust credential storage with tested error paths
+
 ## [0.2.4] - 2026-02-02
 
 ### Added

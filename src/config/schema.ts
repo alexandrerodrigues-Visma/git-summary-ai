@@ -19,6 +19,8 @@ export const configSchema = z.object({
 
 export type Config = z.infer<typeof configSchema>;
 
+export type Provider = 'claude' | 'openai' | 'copilot' | 'gemini';
+
 export const defaultConfig: Config = {
   provider: 'claude',
   maxTokens: 1024,

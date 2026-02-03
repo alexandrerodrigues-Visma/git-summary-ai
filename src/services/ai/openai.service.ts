@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import type { AIService, AISummaryRequest, AISummaryResponse } from './ai.interface.js';
 import { buildSummaryPrompt, parseAIResponse } from '../../prompts/summary.prompt.js';
-import { getApiKeyAsync, getPromptTemplate } from '../../config/loader.js';
+import { getApiKeyAsync } from '../../config/loader.js';
 
 export class OpenAIService implements AIService {
   private client: OpenAI | null = null;

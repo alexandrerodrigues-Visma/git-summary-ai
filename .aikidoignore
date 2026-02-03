@@ -1,0 +1,12 @@
+# Aikido ignore file
+# Ignore test files that contain intentional test fixtures for secret scanning
+tests/**/*.test.ts
+tests/**/*.spec.ts
+**/__tests__/**
+**/__mocks__/**
+
+# Ignore test fixtures and mock data
+**/*.fixture.ts
+**/*.mock.ts
+**/fixtures/**
+**/mocks/**

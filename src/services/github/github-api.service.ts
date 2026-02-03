@@ -212,9 +212,10 @@ export class GitHubApiService {
         html_url: data.html_url,
         number: data.number,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Provide more helpful error messages
-      if (error.status === 404) {
+      const err = error as { status?: number; message?: string; response?: { data?: { errors?: Array<{ message: string }> } } };
+      if (err.status === 404) {
         throw new Error(
           `Repository not found or insufficient permissions.\n` +
           `Make sure:\n` +
@@ -222,9 +223,9 @@ export class GitHubApiService {
           `  2. Your GitHub token has 'repo' scope\n` +
           `  3. You have write access to the repository`
         );
-      } else if (error.status === 422) {
+      } else if (err.status === 422) {
         // Validation error - could be branch doesn't exist, PR already exists, etc.
-        const message = error.response?.data?.errors?.[0]?.message || error.message;
+        const message = err.response?.data?.errors?.[0]?.message || err.message;
         throw new Error(`Cannot create PR: ${message}`);
       }
       throw error;

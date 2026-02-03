@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { GitService } from '../services/git.service.js';
 import { generateAndPreviewSummary } from './summarize.js';
 import { createPullRequest } from './pr.js';
-import { loadConfig } from '../config/loader.js';
 import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/spinner.js';
 import { ensureSetupComplete } from '../utils/setup-check.js';

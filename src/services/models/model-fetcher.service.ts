@@ -1,5 +1,5 @@
-import type { Provider } from '../../config/schema';
-import type { CachedModel, FetchResult } from './types';
+import type { Provider } from '../../config/models';
+import type { FetchResult } from './types';
 
 const ANTHROPIC_VERSION = '2023-06-01';
 

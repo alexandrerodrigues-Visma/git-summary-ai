@@ -127,6 +127,14 @@ export async function generateAndPreviewSummary(options: {
     logger.blank();
 
     // Ask for confirmation
+    logger.info('Options:');
+    console.log('  1. Accept and commit');
+    console.log('  2. Edit title only');
+    console.log('  3. Edit summary only');
+    console.log('  4. Regenerate');
+    console.log('  5. Cancel');
+    logger.blank();
+
     const { action } = await inquirer.prompt([
       {
         type: 'list',
@@ -151,6 +159,12 @@ export async function generateAndPreviewSummary(options: {
       logger.blank();
       
       // Ask how to regenerate
+      logger.info('Regenerate options:');
+      console.log('  1. Regenerate with same prompt');
+      console.log('  2. Refine prompt and regenerate');
+      console.log('  3. Back');
+      logger.blank();
+
       const { regenerateType } = await inquirer.prompt([
         {
           type: 'list',

@@ -1,0 +1,10 @@
+version: 1
+secrets:
+  # Ignore test files that contain intentional test fixtures
+  ignored_paths:
+    - "tests/**/*.test.ts"
+    - "tests/**/*.spec.ts"
+    - "**/__tests__/**"
+    - "**/__mocks__/**"
+    - "**/fixtures/**"
+    - "**/mocks/**"

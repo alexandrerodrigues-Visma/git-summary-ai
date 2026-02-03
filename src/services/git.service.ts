@@ -287,7 +287,7 @@ export class GitService {
           fullMessage: commit.message,
         };
       });
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
