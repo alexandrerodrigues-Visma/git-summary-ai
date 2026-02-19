@@ -128,7 +128,8 @@ async function initConfig(options: { template?: string; model?: string }): Promi
   }
 
   const selectedProvider = provider as Provider;
-  const availableModels = await getAvailableModels(selectedProvider);
+  const initApiKey = await getApiKeyAsync(selectedProvider);
+  const availableModels = await getAvailableModels(selectedProvider, { apiKey: initApiKey || undefined });
   const providerDefaultModel = AVAILABLE_MODELS[selectedProvider].find((m) => m.default)?.id ?? availableModels[0]?.id;
 
   let selectedModel = options.model;
@@ -396,7 +397,8 @@ async function listModels(provider?: string): Promise<void> {
     logger.blank();
 
     // Get dynamic models (with fallback to static)
-    const models = await getAvailableModels(provider as Provider);
+    const providerApiKey = await getApiKeyAsync(provider as Provider);
+    const models = await getAvailableModels(provider as Provider, { apiKey: providerApiKey || undefined });
     const staticModels = AVAILABLE_MODELS[provider as Provider];
     const config = await loadConfig();
     const configuredModel = config.models?.[provider as Provider];

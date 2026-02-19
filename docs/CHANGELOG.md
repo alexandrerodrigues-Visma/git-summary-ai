@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Provider Coverage**: `config init` provider prompt now includes `gemini`
+- **Dynamic Model Discovery in Config Flows**: Better live model selection behavior
+  - `config init` now fetches available models using provider API key when available
+  - `config list-models <provider>` now fetches live models with API key before falling back to cache/static
 - **Documentation**: Updated README and USAGE with model shortcut/alias examples and init options
 
 ## [0.2.6] - 2026-02-03
