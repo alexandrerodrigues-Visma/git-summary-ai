@@ -43,7 +43,7 @@ Commands:
   summarize        Generate AI-powered summary with interactive preview and commit
   push             Push commits to remote with auto upstream config
   pr               Create a GitHub pull request
-  config init      Initialize configuration interactively
+  config init      Initialize configuration (provider, model, branch, template)
   config show      Display current configuration
   config credentials  Manage stored API key credentials
 

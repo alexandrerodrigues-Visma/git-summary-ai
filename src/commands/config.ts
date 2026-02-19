@@ -21,6 +21,8 @@ export function createConfigCommand(): Command {
   config
     .command('init')
     .description('Initialize configuration file')
+    .option('--template <template>', 'Prompt template mode (default or custom)')
+    .option('--model <model>', 'Default model for selected provider')
     .action(initConfig);
 
   config
@@ -74,7 +76,7 @@ export function createConfigCommand(): Command {
   return config;
 }
 
-async function initConfig(): Promise<void> {
+async function initConfig(options: { template?: string; model?: string }): Promise<void> {
   logger.info('Initialize Configuration');
   logger.blank();
 
@@ -83,7 +85,7 @@ async function initConfig(): Promise<void> {
       type: 'list',
       name: 'provider',
       message: 'Select AI provider:',
-      choices: ['claude', 'openai', 'copilot'],
+      choices: ['claude', 'openai', 'copilot', 'gemini'],
       default: 'claude',
     },
     {
@@ -94,11 +96,86 @@ async function initConfig(): Promise<void> {
     },
   ]);
 
+  const normalizedTemplateOption = options.template?.toLowerCase();
+  if (normalizedTemplateOption && normalizedTemplateOption !== 'default' && normalizedTemplateOption !== 'custom') {
+    logger.error(`Invalid template option: ${options.template}`);
+    logger.info('Valid template options: default, custom');
+    process.exit(1);
+  }
+
+  let templateOption: 'default' | 'custom';
+  if (normalizedTemplateOption) {
+    templateOption = normalizedTemplateOption as 'default' | 'custom';
+  } else {
+    const templatePromptResult = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'templateOption',
+        message: 'Prompt template:',
+        choices: [
+          { name: 'Use default template', value: 'default' },
+          { name: 'Create custom template from default base', value: 'custom' },
+        ],
+        default: 'default',
+      },
+    ]);
+    templateOption = templatePromptResult.templateOption;
+  }
+
+  const selectedProvider = provider as Provider;
+  const availableModels = await getAvailableModels(selectedProvider);
+  const providerDefaultModel = AVAILABLE_MODELS[selectedProvider].find((m) => m.default)?.id ?? availableModels[0]?.id;
+
+  let selectedModel = options.model;
+  if (selectedModel) {
+    const isValid = await ModelResolverService.isValidModel(selectedProvider, selectedModel);
+    if (!isValid) {
+      logger.error(`Invalid model '${selectedModel}' for provider '${provider}'.`);
+      logger.blank();
+      logger.info(`Available models for ${provider}:`);
+      availableModels.forEach((m) => {
+        logger.detail(m.id, m.displayName);
+      });
+      logger.blank();
+      process.exit(1);
+    }
+  } else {
+    const modelPromptResult = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'model',
+        message: 'Select default model:',
+        choices: availableModels.map((m) => ({
+          name: `${m.displayName}${m.id === providerDefaultModel ? ' (recommended)' : ''}`,
+          value: m.id,
+        })),
+        default: providerDefaultModel,
+      },
+    ]);
+    selectedModel = modelPromptResult.model;
+  }
+
+  let promptTemplate: string | undefined;
+  if (templateOption === 'custom') {
+    logger.blank();
+    logger.info('Opening default template in your editor for customization...');
+    logger.blank();
+    promptTemplate = await editTemplateInEditor(DEFAULT_PROMPT_TEMPLATE);
+  }
+
   const configPath = join(process.cwd(), '.git-summary-airc.json');
-  await writeFile(
-    configPath,
-    JSON.stringify({ provider, targetBranch }, null, 2),
-  );
+  const configToSave: Partial<Config> = {
+    provider,
+    targetBranch,
+    models: {
+      [selectedProvider]: selectedModel,
+    },
+  };
+  if (promptTemplate) {
+    configToSave.promptTemplate = promptTemplate;
+  }
+
+  await writeFile(configPath, JSON.stringify(configToSave, null, 2));
 
   logger.success(`Configuration saved to ${configPath}`);
   logger.blank();
@@ -388,10 +465,6 @@ async function editPromptTemplate(): Promise<void> {
   
   // Get current template or default
   const currentTemplate = config.promptTemplate || DEFAULT_PROMPT_TEMPLATE;
-  
-  // Create a temporary file
-  const tempFile = join(tmpdir(), `git-summary-ai-template-${Date.now()}.txt`);
-  await writeFile(tempFile, currentTemplate);
 
   logger.blank();
   logger.info(chalk.bold('Editing AI Prompt Template'));
@@ -401,32 +474,7 @@ async function editPromptTemplate(): Promise<void> {
   logger.detail('{context}', 'Branch name, files changed, line stats');
   logger.detail('{customInstructions}', 'Custom refinement instructions');
   logger.blank();
-  logger.info('Opening editor...');
-  logger.blank();
-
-  // Determine editor to use
-  const editor = process.env.EDITOR || process.env.VISUAL || (process.platform === 'win32' ? 'notepad' : 'nano');
-
-  // Open editor
-  await new Promise<void>((resolve, reject) => {
-    const editorProcess = spawn(editor, [tempFile], { 
-      stdio: 'inherit',
-      shell: true
-    });
-
-    editorProcess.on('exit', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Editor exited with code ${code}`));
-      }
-    });
-
-    editorProcess.on('error', reject);
-  });
-
-  // Read edited template
-  const editedTemplate = await readFile(tempFile, 'utf-8');
+  const editedTemplate = await editTemplateInEditor(currentTemplate);
   
   // Confirm save
   const { shouldSave } = await inquirer.prompt([{
@@ -458,6 +506,35 @@ async function editPromptTemplate(): Promise<void> {
   logger.info('To see your template: ' + chalk.cyan('gitai config show-prompt-template'));
   logger.info('To reset to default: ' + chalk.cyan('gitai config reset-prompt-template'));
   logger.blank();
+}
+
+async function editTemplateInEditor(initialTemplate: string): Promise<string> {
+  const tempFile = join(tmpdir(), `git-summary-ai-template-${Date.now()}.txt`);
+  await writeFile(tempFile, initialTemplate);
+
+  logger.info('Opening editor...');
+  logger.blank();
+
+  const editor = process.env.EDITOR || process.env.VISUAL || (process.platform === 'win32' ? 'notepad' : 'nano');
+
+  await new Promise<void>((resolve, reject) => {
+    const editorProcess = spawn(editor, [tempFile], {
+      stdio: 'inherit',
+      shell: true,
+    });
+
+    editorProcess.on('exit', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Editor exited with code ${code}`));
+      }
+    });
+
+    editorProcess.on('error', reject);
+  });
+
+  return readFile(tempFile, 'utf-8');
 }
 
 async function showPromptTemplate(): Promise<void> {

@@ -665,16 +665,23 @@ Initialize configuration interactively.
 
 ```bash
 git-summary-ai config init
+
+# Skip template prompt and force default/custom template mode
+git-summary-ai config init --template default
+git-summary-ai config init --template custom
+
+# Skip model prompt and force model for selected provider
+git-summary-ai config init --model gpt-4o
 ```
 
 **Prompts:**
-- AI provider selection (Claude or OpenAI)
+- AI provider selection (Claude, OpenAI, Copilot, or Gemini)
+- Default model selection for chosen provider
 - Default target branch
-- Create .env file option
+- Prompt template choice (use default or create custom from default base)
 
 **Creates:**
-- `.git-summary-airc.json` - Configuration file
-- `.env` (optional) - API keys template
+- `.git-summary-airc.json` - Configuration file (includes custom `promptTemplate` when selected)
 
 #### `config show`
 
