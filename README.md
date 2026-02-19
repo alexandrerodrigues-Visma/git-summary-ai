@@ -123,6 +123,12 @@ git-summary-ai config set-provider copilot
 # Set default model for a provider
 git-summary-ai config set-model copilot gpt-4o
 
+# Set default model for current provider
+git-summary-ai config set-model gpt-4o
+
+# Alias: set model for current provider
+git-summary-ai config set-current-model gpt-4o
+
 # Use specific AI provider for one command
 git-summary-ai summarize --provider copilot
 
@@ -159,6 +165,12 @@ gitai config edit-prompt-template
 # Set default model per provider
 gitai config set-model claude claude-sonnet-4-20250514
 gitai config set-model openai gpt-4o
+
+# Set default model for your current provider
+gitai config set-model gpt-4o
+
+# Alias: set model for your current provider
+gitai config set-current-model gpt-4o
 
 # List available models
 gitai config list-models

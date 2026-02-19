@@ -41,9 +41,14 @@ export function createConfigCommand(): Command {
     .action(setDefaultProvider);
 
   config
-    .command('set-model <provider> <model>')
-    .description('Set default model for a specific provider')
+    .command('set-model [provider] [model]')
+    .description('Set default model (use current provider or specify one)')
     .action(setDefaultModel);
+
+  config
+    .command('set-current-model <model>')
+    .description('Set default model for currently configured provider')
+    .action(setCurrentProviderModel);
 
   config
     .command('list-models [provider]')
@@ -269,7 +274,26 @@ async function setDefaultProvider(provider: string): Promise<void> {
   logger.blank();
 }
 
-async function setDefaultModel(provider: string, model: string): Promise<void> {
+async function setDefaultModel(providerOrModel?: string, modelArg?: string): Promise<void> {
+  if (!providerOrModel) {
+    logger.error('Missing model argument');
+    logger.info('Usage: gitai config set-model <provider> <model>');
+    logger.info('   or: gitai config set-model <model>');
+    process.exit(1);
+  }
+
+  let provider: string;
+  let model: string;
+
+  if (modelArg) {
+    provider = providerOrModel;
+    model = modelArg;
+  } else {
+    model = providerOrModel;
+    const currentConfig = await loadConfig();
+    provider = currentConfig.provider;
+  }
+
   // Validate provider
   const validProviders = ['claude', 'openai', 'copilot', 'gemini'];
   if (!validProviders.includes(provider)) {
@@ -341,6 +365,10 @@ async function setDefaultModel(provider: string, model: string): Promise<void> {
   logger.info('This model will be used when running commands with this provider.');
   logger.info('You can override it per-command with the --model flag.');
   logger.blank();
+}
+
+async function setCurrentProviderModel(model: string): Promise<void> {
+  await setDefaultModel(model);
 }
 
 async function listModels(provider?: string): Promise<void> {
@@ -453,6 +481,7 @@ async function listModels(provider?: string): Promise<void> {
 
     logger.info('To see details: ' + chalk.cyan('gitai config list-models <provider>'));
     logger.info('To set default: ' + chalk.cyan('gitai config set-model <provider> <model-id>'));
+    logger.info('Current provider shortcut: ' + chalk.cyan('gitai config set-current-model <model-id>'));
     logger.info('To refresh cache: ' + chalk.cyan('gitai config refresh-models'));
   }
 

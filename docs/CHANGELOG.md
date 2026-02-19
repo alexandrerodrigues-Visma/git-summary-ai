@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-02-19
+
+### Added
+- **Config Model Shortcuts**: Easier model updates for the active provider
+  - New `config set-current-model <model>` command alias
+  - Existing `config set-model` now supports provider-less form: `config set-model <model>`
+  - Both forms use the currently configured provider automatically
+- **Config Init Improvements**: Expanded interactive setup scope
+  - `config init` now prompts for a default model after provider selection
+  - Added `--model` option to preselect a default model during init
+  - Added `--template` option to choose default/custom prompt template mode during init
+
+### Changed
+- **Provider Coverage**: `config init` provider prompt now includes `gemini`
+- **Documentation**: Updated README and USAGE with model shortcut/alias examples and init options
+
 ## [0.2.6] - 2026-02-03
 
 ### Added

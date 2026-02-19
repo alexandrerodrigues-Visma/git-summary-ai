@@ -507,6 +507,12 @@ gitai config list-models copilot
 gitai config set-model copilot gpt-4o
 gitai config set-model claude claude-sonnet-4-20250514
 gitai config set-model openai gpt-4o-mini
+
+# Set default for current provider
+gitai config set-model gpt-4o
+
+# Alias: set default for current provider
+gitai config set-current-model gpt-4o
 ```
 
 This saves to `~/.git-summary-ai/config.json`:
@@ -738,9 +744,9 @@ Manage stored API credentials interactively.
 git-summary-ai config credentials
 ```
 
-#### `config set-model <provider> <model>`
+#### `config set-model [provider] <model>`
 
-Set the default model for a specific AI provider.
+Set the default model for a specific provider, or for the currently configured provider.
 
 ```bash
 # Set default model for GitHub Copilot
@@ -751,14 +757,36 @@ git-summary-ai config set-model claude claude-sonnet-4-20250514
 
 # Set default model for OpenAI
 git-summary-ai config set-model openai gpt-4o-mini
+
+# Set default model for current provider
+git-summary-ai config set-model gpt-4o
+
+# Alias: set default model for current provider
+git-summary-ai config set-current-model gpt-4o
 ```
 
 **Features:**
 - Validates provider is configured (has API key) before allowing model to be set
+- Supports shortcut form using current provider: `gitai config set-model <model>`
+- Supports explicit alias for current provider: `gitai config set-current-model <model>`
 - Validates model is available for the provider
 - Shows available models if invalid model specified
 - Updates `~/.git-summary-ai/config.json` in `models` object
 - Takes effect immediately for all subsequent commands
+
+#### `config set-current-model <model>`
+
+Set the default model for the currently configured provider.
+
+```bash
+git-summary-ai config set-current-model gpt-4o
+```
+
+Equivalent to:
+
+```bash
+git-summary-ai config set-model gpt-4o
+```
 
 **Example:**
 ```bash
